@@ -58,7 +58,11 @@ the image's Python tools (`pip download -d tools --python-version 3.13
 --only-binary=:all: pytest pytest-timeout==2.1.0 typer pdm-backend setuptools
 wheel poetry-core hatchling flit-core editables`).
 
-Known local limits: the harness unpacks every small wheel from `wheels/` into
-the sandbox, so public `requests` tasks import the wheel's `requests` rather
-than the repository's; and `wheels/` lacks `typing_inspection`, so fastapi
-tests fail to collect. Neither affects the hidden set.
+The verifier corrects three local differences from the scoring environment,
+so that public tasks behave as the hidden set's private repositories do:
+the repository's own package is left out of the wheel set (otherwise the
+tests import the released wheel instead of the repository); each dependency
+is limited to the versions the snapshot's `pyproject.toml` allows (otherwise
+the harness installs the newest wheel, e.g. a starlette too new for older
+fastapi); and fastapi gets `typing_inspection` and `inline_snapshot`, which
+its tests need and the public wheel set lacks (in `data/wheels_extra/fastapi/`).

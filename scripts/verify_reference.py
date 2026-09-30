@@ -16,6 +16,8 @@ Local environment corrections, so that a public task behaves as a private
 hidden-set repository would:
   - the repository's own package is removed from the wheel set, so its tests
     import the repository's code rather than a released wheel;
+  - each dependency is limited to the versions the snapshot's pyproject.toml
+    allows, since the harness otherwise installs the newest wheel of each;
   - wheels in data/wheels_extra/<package>/ are added for that repository only
     (for fastapi: typing_inspection and inline_snapshot with its dependencies,
     which its tests need and the public wheel set lacks).
@@ -30,15 +32,20 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
-import re
+import os
 import shutil
+import subprocess
 import tempfile
 import time
+import tomllib
 from pathlib import Path
 
 from adk_eval_core.tracing.trace import SessionTrace
 from adk_submission import ModelRegistry
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
 from swegemma.config import EvalConfig
 from swegemma.evaluate import Evaluator
 from swegemma.models import load_tasks
@@ -57,23 +64,53 @@ def with_newline(patch: str) -> str:
     return patch if patch.endswith("\n") else patch + "\n"
 
 
-def wheels_for(data: Path, repo: str) -> Path:
-    """A per-repository wheel directory without the repository's own package."""
+def snapshot_requirements(data: Path, task_id: str) -> list[Requirement]:
+    """The [project] dependencies declared in the task snapshot's pyproject.toml."""
+    out = subprocess.run(["tar", "-xzOf", str(data / "snapshots" / f"{task_id}.tgz"), "./pyproject.toml"],
+                         capture_output=True)
+    if out.returncode != 0:
+        return []
+    deps = tomllib.loads(out.stdout.decode(errors="replace")).get("project", {}).get("dependencies", [])
+    reqs = []
+    for dep in deps:
+        try:
+            reqs.append(Requirement(dep))
+        except InvalidRequirement:
+            pass
+    return reqs
+
+
+def wheels_for(data: Path, repo: str, task_id: str) -> Path:
+    """The task's wheel set: without the repository's own package, and with each
+    dependency limited to the versions the snapshot's pyproject.toml allows (the
+    harness otherwise installs the newest wheel of every package)."""
     own = OWN_DISTRIBUTION.get(repo, repo.rsplit("/", 1)[-1]).lower()
-    target = data / "wheels_by_repo" / own
-    if target.exists():
-        return target
-    target.mkdir(parents=True)
+    limits = {canonicalize_name(r.name): r.specifier for r in snapshot_requirements(data, task_id)}
+    chosen = []
     sources = list((data / "wheels").glob("*.whl")) + list((data / "wheels_extra" / own).glob("*.whl"))
-    for wheel in sources:
-        name = re.split(r"-", wheel.name, maxsplit=1)[0].lower().replace("_", "-")
-        if name != own:
-            shutil.copy2(wheel, target / wheel.name)
+    for wheel in sorted(sources):
+        name, version = wheel.name.split("-")[:2]
+        name = canonicalize_name(name)
+        if name == own:
+            continue
+        spec = limits.get(name)
+        if spec is not None and not spec.contains(version, prereleases=True):
+            continue
+        chosen.append(wheel)
+    key = hashlib.sha256("\n".join(w.name for w in chosen).encode()).hexdigest()[:16]
+    target = data / "wheels_by_set" / key
+    if not target.exists():
+        staging = target.with_suffix(".tmp")
+        shutil.rmtree(staging, ignore_errors=True)
+        staging.mkdir(parents=True)
+        for wheel in chosen:
+            os.link(wheel, staging / wheel.name)
+        staging.rename(target)
     return target
 
 
-def make_evaluator(data: Path, results: Path, repo: str, patch: str | None) -> Evaluator:
-    wheels = wheels_for(data, repo)
+def make_evaluator(data: Path, results: Path, repo: str, task_id: str, patch: str | None) -> Evaluator:
+    wheels = wheels_for(data, repo, task_id)
     # The harness caches unpacked wheels under the temp dir by a fixed name,
     # so each wheel set needs its own temp dir.
     cache = data / "wheel_cache" / wheels.name
@@ -99,7 +136,7 @@ def make_evaluator(data: Path, results: Path, repo: str, patch: str | None) -> E
 
 
 def run_once(data: Path, results: Path, task, patch: str | None) -> dict:
-    evaluator = make_evaluator(data, results, task.repo, patch)
+    evaluator = make_evaluator(data, results, task.repo, task.instance_id, patch)
     start = time.time()
     result = asyncio.run(evaluator.evaluate_task(task=task, task_index=1, total_tasks=1))
     return {
