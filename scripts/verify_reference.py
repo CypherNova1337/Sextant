@@ -16,8 +16,9 @@ Local environment corrections, so that a public task behaves as a private
 hidden-set repository would:
   - the repository's own package is removed from the wheel set, so its tests
     import the repository's code rather than a released wheel;
-  - wheels in data/wheels_extra (typing_inspection, which fastapi's pydantic
-    needs and the public wheel set lacks) are added.
+  - wheels in data/wheels_extra/<package>/ are added for that repository only
+    (for fastapi: typing_inspection and inline_snapshot with its dependencies,
+    which its tests need and the public wheel set lacks).
 
 Usage:
   python scripts/verify_reference.py [--data DIR] [--out FILE] TASK_ID [...]
@@ -32,6 +33,7 @@ import asyncio
 import json
 import re
 import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -62,7 +64,7 @@ def wheels_for(data: Path, repo: str) -> Path:
     if target.exists():
         return target
     target.mkdir(parents=True)
-    sources = list((data / "wheels").glob("*.whl")) + list((data / "wheels_extra").glob("*.whl"))
+    sources = list((data / "wheels").glob("*.whl")) + list((data / "wheels_extra" / own).glob("*.whl"))
     for wheel in sources:
         name = re.split(r"-", wheel.name, maxsplit=1)[0].lower().replace("_", "-")
         if name != own:
@@ -71,6 +73,12 @@ def wheels_for(data: Path, repo: str) -> Path:
 
 
 def make_evaluator(data: Path, results: Path, repo: str, patch: str | None) -> Evaluator:
+    wheels = wheels_for(data, repo)
+    # The harness caches unpacked wheels under the temp dir by a fixed name,
+    # so each wheel set needs its own temp dir.
+    cache = data / "wheel_cache" / wheels.name
+    cache.mkdir(parents=True, exist_ok=True)
+    tempfile.tempdir = str(cache)
     config = EvalConfig(
         tasks_path=data / "tasks.jsonl",
         snapshots_dir=data / "snapshots",
@@ -78,7 +86,7 @@ def make_evaluator(data: Path, results: Path, repo: str, patch: str | None) -> E
         submission_dir=ROOT / "agent",
         models=ModelRegistry(),
         sandbox="docker",
-        wheels_dir=wheels_for(data, repo),
+        wheels_dir=wheels,
         skip_agent_patch=patch is None,
         verbose=False,
     )

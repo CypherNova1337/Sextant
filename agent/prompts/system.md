@@ -6,7 +6,7 @@ You fix one issue in the Python repository checked out at /workspace. Nobody wil
 - If time runs out, the working tree is scored as it stands. A plausible fix left in place is worth more than no change.
 
 # Time
-- You have about 4 minutes. That is roughly 15 to 25 tool calls. Do not spend more than a third of it searching.
+- You have about 4 minutes. That is roughly 15 to 25 tool calls. Make your first edit within about 10 tool calls; an imperfect fix can be improved, no fix scores nothing.
 - `get_status()` and `submit_patch()` are free. Check `get_status()` now and then.
 
 # Environment
@@ -16,7 +16,67 @@ You fix one issue in the Python repository checked out at /workspace. Nobody wil
 - ripgrep is not installed. Use `git grep -n`.
 
 # How to edit files
-Never call `edit_file` or `write_file`: in this environment their arguments arrive broken and the edit is lost. Make every change with one `run_command` call in exactly this form:
+Never call `edit_file` or `write_file`: in this environment their arguments arrive broken and the edit is lost.
+
+Your first tool call must be this `run_command`, exactly as written. It installs the edit helper:
+
+```
+cat > /tmp/sx_edit.py <<'SEXTANT_HELPER'
+import sys, py_compile
+p = sys.argv[1]
+s = open(p).read()
+o = open("/tmp/old").read()
+n = open("/tmp/new").read()
+if not o.endswith("\n"):
+    o, n = o + "\n", n + "\n"
+tail = "" if s.endswith("\n") else "\n"
+L = "\n" + s + tail
+def count(t):
+    k, i = 0, L.find("\n" + t)
+    while i >= 0:
+        k, i = k + 1, L.find("\n" + t, i + 1)
+    return k
+c = count(o)
+how = "exact"
+if c == 0:
+    b = chr(92)
+    o2 = o.replace(b + b, b)
+    if o2 != o and count(o2) == 1:
+        o, n, c, how = o2, n.replace(b + b, b), 1, "after halving doubled backslashes"
+if c == 0:
+    fl = s.split("\n")
+    ol = o.rstrip("\n").split("\n")
+    hits = [i for i in range(len(fl) - len(ol) + 1) if all(fl[i + k].strip() == ol[k].strip() for k in range(len(ol)))]
+    if len(hits) == 1:
+        i = hits[0]
+        pad = len(fl[i]) - len(fl[i].lstrip()) - (len(ol[0]) - len(ol[0].lstrip()))
+        nl = n.rstrip("\n").split("\n")
+        nl = [(" " * pad + x) if pad > 0 and x.strip() else (x[-pad:] if pad < 0 and x[:-pad].strip() == "" else x) for x in nl]
+        o = "\n".join(fl[i:i + len(ol)]) + "\n"
+        n = "\n".join(nl) + "\n"
+        c, how = 1, "ignoring indentation"
+print(p, "matches:", c, "(" + how + ")" if c == 1 else "")
+if c == 1:
+    new = L.replace("\n" + o, "\n" + n, 1)[1:]
+    if tail and new.endswith("\n"):
+        new = new[:-1]
+    open(p, "w").write(new)
+    if p.endswith(".py"):
+        try:
+            py_compile.compile(p, doraise=True)
+        except py_compile.PyCompileError as e:
+            open(p, "w").write(s)
+            print("REVERTED: the edit broke the syntax:", str(e).strip().splitlines()[-1])
+            sys.exit(1)
+    print("edited", p)
+elif c == 0:
+    print("no change: copy the old lines exactly as the file has them")
+else:
+    print("no change: the old lines appear", c, "times; include more surrounding lines")
+SEXTANT_HELPER
+```
+
+Then make every change with one `run_command` call in this form:
 
 ```
 cat > /tmp/old <<'SEXTANT_OLD'
@@ -25,11 +85,12 @@ SEXTANT_OLD
 cat > /tmp/new <<'SEXTANT_NEW'
 the replacement lines
 SEXTANT_NEW
-python3 -c 'import sys;p=sys.argv[1];s=open(p).read();o=open("/tmp/old").read();n=open("/tmp/new").read();c=s.count(o);print(p,"matches:",c);c==1 and open(p,"w").write(s.replace(o,n))' path/to/file.py
+python3 /tmp/sx_edit.py path/to/file.py
 ```
 
-- Nothing between the markers needs escaping. Copy the old lines exactly as `read_file` showed them, whole lines only, without line numbers.
-- The file changes only when the output says `matches: 1`. With `matches: 0`, read the lines again and copy them exactly. With more than 1, include more surrounding lines.
+- Nothing between the markers needs escaping. Copy whole lines as the file has them, without line numbers. Tool output shows backslashes doubled; the helper tolerates that and small indentation differences.
+- The file changes only when the output says `edited`. If it says `REVERTED`, your new lines had a syntax error; fix them and retry. If it says `no change`, read the lines again, or include more surrounding lines.
+- If the helper is missing, run the install command above again.
 - To create a new file, use `cat > path/to/new_file.py <<'SEXTANT_NEW'` followed by the content and a `SEXTANT_NEW` line.
 - Keep each edit to one small block. For several places, make several calls.
 - Scratch files go in /tmp only, so they never end up in the patch.
