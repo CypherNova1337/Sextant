@@ -1,0 +1,15 @@
+# Local stand-in for the scoring sandbox (Dockerfile.public). Differences:
+# full python:3.13 base (git and patch preinstalled, no pigz or protoc) and
+# the Python tools installed offline from wheels fetched on the host.
+FROM mirror.gcr.io/library/python:3.13
+COPY tools/ /tmp/tools/
+RUN pip install --no-cache-dir --no-index --find-links=/tmp/tools pytest pytest-timeout==2.1.0 typer pdm-backend setuptools wheel poetry-core hatchling flit-core editables \
+    && rm -rf /tmp/tools && mkdir -p /wheels
+COPY imp.py /usr/local/lib/python3.13/site-packages/imp.py
+COPY telnetlib.py /usr/local/lib/python3.13/site-packages/telnetlib.py
+RUN git config --global user.email "agent@eval" \
+    && git config --global user.name "Agent" \
+    && git config --global init.defaultBranch main
+ENV TEST_TMPDIR=/tmp
+WORKDIR /workspace
+COPY wheels/ /wheels/

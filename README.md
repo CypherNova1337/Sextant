@@ -43,3 +43,22 @@ python3.13 -m venv .venv
     litellm networkx pandas pyyaml docker cachetools python-dotenv rich numpy safetensors pytest
 .venv/bin/python scripts/build_submission.py
 ```
+
+## Local verification
+
+`scripts/verify_reference.py` runs the official verification phase on public
+tasks with no patch (expected to fail) and with the reference patch (expected
+to pass). It uses the Docker sandbox; the plain-process sandbox is not
+faithful, because its environment inherits the host's installed packages.
+
+The image is built offline from `docker/Dockerfile.local`, a stand-in for the
+competition's `Dockerfile.public`. The build context needs the competition's
+`docker/` shims and `wheels/`, plus a `tools/` directory holding wheels for
+the image's Python tools (`pip download -d tools --python-version 3.13
+--only-binary=:all: pytest pytest-timeout==2.1.0 typer pdm-backend setuptools
+wheel poetry-core hatchling flit-core editables`).
+
+Known local limits: the harness unpacks every small wheel from `wheels/` into
+the sandbox, so public `requests` tasks import the wheel's `requests` rather
+than the repository's; and `wheels/` lacks `typing_inspection`, so fastapi
+tests fail to collect. Neither affects the hidden set.
