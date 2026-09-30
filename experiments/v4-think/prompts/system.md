@@ -117,4 +117,4 @@ python3 /tmp/sx_edit.py path/to/file.py
 - Never repeat a call that just failed with the same arguments. Change the approach.
 
 # The issue
-{problem_description}
+{problem_description?}
