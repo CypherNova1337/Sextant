@@ -2,7 +2,10 @@
 
 The notebook serves the competition model with vLLM, runs the official
 swegemma Evaluator (agent phase and verification phase, subprocess sandbox)
-on the given task ids, and writes per-task results to /kaggle/working.
+on the given task ids, and writes per-task results, including each agent
+patch, to /kaggle/working/run_summary.json. The in-notebook verdicts come from
+the subprocess sandbox, which sees the host's installed packages; re-score the
+patches locally with scripts/verify_reference.py --patches for a faithful result.
 
 Usage:
   python scripts/make_eval_notebook.py OUT_DIR SLUG TASK_ID [TASK_ID ...]
@@ -130,7 +133,8 @@ for i, tid in enumerate(TASK_IDS, 1):
         r = run_sync(evaluator.evaluate_task, task=tasks[tid], task_index=i, total_tasks=len(TASK_IDS))
         row = {"id": tid, "resolved": bool(r.resolved), "test_exit_code": r.test_exit_code,
                "patch_chars": len(r.agent_patch or ""), "tool_calls": r.tool_calls,
-               "agent_seconds": r.duration_seconds, "error": getattr(r, "error", None)}
+               "agent_seconds": r.duration_seconds, "error": getattr(r, "error", None),
+               "patch": r.agent_patch or ""}
     except Exception as e:
         row = {"id": tid, "resolved": False, "error": f"{type(e).__name__}: {e}"}
     row["wall_seconds"] = round(time.time() - t, 1)
