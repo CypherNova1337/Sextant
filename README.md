@@ -20,3 +20,26 @@ python3 .githooks/attribution.py tree
 ```
 
 Competition data goes in `data/` (ignored by git).
+
+## Layout
+
+- `agent/` — the submission source: `agent.yaml`, prompts, sampling and
+  per-task budgets. Packaged into `submission.zip` by the build script.
+- `splits/` — the fixed dev / held-out split of the 129 public tasks. Held-out
+  tasks are never used for iteration.
+- `scripts/build_submission.py` — validates `agent/` with the competition's
+  own validator and compiler, then writes a files-only `submission.zip`.
+- `scripts/make_split.py` — regenerates `splits/` deterministically.
+- `scripts/make_eval_notebook.py` — generates a private Kaggle notebook that
+  serves the competition model and runs the official evaluator on dev tasks.
+
+The official harness (`swegemma`, `adk-submission`, `adk-eval-core`) is in
+the `metric/gemma-4-developer-agent-wheelhouse` Kaggle dataset and needs
+Python 3.12 or later:
+
+```sh
+python3.13 -m venv .venv
+.venv/bin/pip install <wheelhouse>/{swegemma,adk_submission,adk_eval_core,google_adk,google_genai}-*.whl \
+    litellm networkx pandas pyyaml docker cachetools python-dotenv rich numpy safetensors pytest
+.venv/bin/python scripts/build_submission.py
+```
