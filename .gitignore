@@ -1,0 +1,16 @@
+# Competition data is large and licensed separately; it lives in data/ locally.
+data/
+*.tgz
+*.whl
+*.npy
+*.npz
+*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Run outputs
+runs/

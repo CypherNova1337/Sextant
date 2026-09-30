@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refuses to push any commit with the wrong identity or with attribution in its
+# message or its changes.
+exec python3 "$(git rev-parse --show-toplevel)/.githooks/attribution.py" push

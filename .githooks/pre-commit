@@ -1,0 +1,15 @@
+#!/bin/sh
+# Authorship is fixed. A reset toolchain must not be able to rewrite it.
+want_name="CypherNova1337"
+want_mail="131998711+CypherNova1337@users.noreply.github.com"
+have_name=$(git config user.name)
+have_mail=$(git config user.email)
+if [ "$have_name" != "$want_name" ] || [ "$have_mail" != "$want_mail" ]; then
+    echo "pre-commit: author is '$have_name <$have_mail>'," >&2
+    echo "            expected '$want_name <$want_mail>'." >&2
+    echo "  git config user.name  \"$want_name\"" >&2
+    echo "  git config user.email \"$want_mail\"" >&2
+    exit 1
+fi
+# Refuses staged additions carrying tooling attribution.
+exec python3 "$(git rev-parse --show-toplevel)/.githooks/attribution.py" staged

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refuses a commit message carrying tooling attribution.
+exec python3 "$(git rev-parse --show-toplevel)/.githooks/attribution.py" msg "$1"
