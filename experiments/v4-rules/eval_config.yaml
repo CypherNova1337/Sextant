@@ -1,0 +1,6 @@
+# Tasks run one after another and the whole run, setup included, must finish
+# in 12 hours: about 120 tasks leaves roughly 5.5 minutes each.
+evaluation:
+  timeout_seconds: 120
+  max_time_minutes: 4
+  max_turns: 60

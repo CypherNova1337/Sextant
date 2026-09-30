@@ -8,15 +8,17 @@ the subprocess sandbox, which sees the host's installed packages; re-score the
 patches locally with scripts/verify_reference.py --patches for a faithful result.
 
 Usage:
-  python scripts/make_eval_notebook.py OUT_DIR SLUG TASK_ID [TASK_ID ...]
+  python scripts/make_eval_notebook.py OUT_DIR SLUG TASK_ID [...] [--agent DIR ...]
+Several --agent directories are evaluated against one model server, task by
+task, which saves the server start-up for every extra variant.
 Then:
   kaggle kernels push -p OUT_DIR
 """
 
 from __future__ import annotations
 
+import argparse
 import json
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -57,15 +59,19 @@ print(f"wheels installed in {time.time() - T0:.0f}s")
 '''
 
 AGENT = r'''
-AGENT_FILES = json.loads(__AGENT_JSON__)
+AGENTS = json.loads(__AGENT_JSON__)
 TASK_IDS = json.loads(__TASK_JSON__)
-AGENT_DIR = Path("/kaggle/working/agent")
-shutil.rmtree(AGENT_DIR, ignore_errors=True)
-for rel, text in AGENT_FILES.items():
-    p = AGENT_DIR / rel
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text)
-print(sorted(AGENT_FILES), TASK_IDS)
+AGENT_DIRS = {}
+for name, files in AGENTS.items():
+    d = Path("/kaggle/working/agents") / name
+    shutil.rmtree(d, ignore_errors=True)
+    for rel, text in files.items():
+        p = d / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text)
+    AGENT_DIRS[name] = d
+AGENT_DIR = next(iter(AGENT_DIRS.values()))
+print(list(AGENT_DIRS), TASK_IDS)
 '''
 
 SERVE = r'''
@@ -108,12 +114,14 @@ def run_sync(fn, **kw):
 
 data = Path(sorted(glob.glob("/kaggle/input/**/tasks.jsonl", recursive=True))[0]).parent
 tasks = {t.instance_id: t for t in load_tasks(data / "tasks.jsonl")}
-cfg_path = AGENT_DIR / "eval_config.yaml"
-ev = (yaml.safe_load(cfg_path.read_text()) or {}).get("evaluation", {}) if cfg_path.exists() else {}
 limits, constraints = build_submission_limits()
-evaluator = Evaluator(EvalConfig(
+
+def make_evaluator(name, agent_dir):
+    cfg_path = agent_dir / "eval_config.yaml"
+    ev = (yaml.safe_load(cfg_path.read_text()) or {}).get("evaluation", {}) if cfg_path.exists() else {}
+    return Evaluator(EvalConfig(
     tasks_path=data / "tasks.jsonl", snapshots_dir=data / "snapshots",
-    results_dir=Path("/kaggle/working/results"), submission_dir=AGENT_DIR, models=models,
+    results_dir=Path("/kaggle/working/results") / name, submission_dir=agent_dir, models=models,
     sandbox="subprocess",
     timeout_seconds=int(ev.get("timeout_seconds", 300)),
     max_time_minutes=float(ev.get("max_time_minutes", 60.0)),
@@ -125,18 +133,22 @@ evaluator = Evaluator(EvalConfig(
         compaction_interval=5, overlap_size=2, token_threshold=14336, event_retention_size=5),
     graph_dir=str(data / "graphs"), embeddings_dir=str(data / "embeddings"),
     wheels_dir=data / "wheels", verbose=False,
-))
+    ))
+
+evaluators = {name: make_evaluator(name, d) for name, d in AGENT_DIRS.items()}
 rows = []
+# Task-major order, so a run cut short still compares the variants on the same tasks.
 for i, tid in enumerate(TASK_IDS, 1):
+  for name, evaluator in evaluators.items():
     t = time.time()
     try:
         r = run_sync(evaluator.evaluate_task, task=tasks[tid], task_index=i, total_tasks=len(TASK_IDS))
-        row = {"id": tid, "resolved": bool(r.resolved), "test_exit_code": r.test_exit_code,
+        row = {"agent": name, "id": tid, "resolved": bool(r.resolved), "test_exit_code": r.test_exit_code,
                "patch_chars": len(r.agent_patch or ""), "tool_calls": r.tool_calls,
                "agent_seconds": r.duration_seconds, "error": getattr(r, "error", None),
                "patch": r.agent_patch or ""}
     except Exception as e:
-        row = {"id": tid, "resolved": False, "error": f"{type(e).__name__}: {e}"}
+        row = {"agent": name, "id": tid, "resolved": False, "error": f"{type(e).__name__}: {e}"}
     row["wall_seconds"] = round(time.time() - t, 1)
     rows.append(row)
     print(json.dumps(row, default=str))
@@ -153,15 +165,23 @@ def cell(src: str) -> dict:
 
 
 def main() -> None:
-    out, slug, task_ids = Path(sys.argv[1]), sys.argv[2], sys.argv[3:]
-    if not task_ids:
-        raise SystemExit("give at least one task id")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("out", type=Path)
+    parser.add_argument("slug")
+    parser.add_argument("task_ids", nargs="+")
+    parser.add_argument("--agent", action="append", type=Path,
+                        help="agent directory; repeat to compare variants (default: agent/)")
+    args = parser.parse_args()
+    out, slug, task_ids = args.out, args.slug, args.task_ids
+    agent_dirs = [d.resolve() for d in (args.agent or [AGENT_DIR])]
     held_out = set((ROOT / "splits" / "held_out.txt").read_text().split())
     if held_out & set(task_ids):
         raise SystemExit(f"held-out tasks requested: {sorted(held_out & set(task_ids))}")
-    files = {p.relative_to(AGENT_DIR).as_posix(): p.read_text()
-             for p in sorted(AGENT_DIR.rglob("*")) if p.is_file()}
-    agent_src = (AGENT.replace("__AGENT_JSON__", repr(json.dumps(files)))
+    agents = {d.name: {p.relative_to(d).as_posix(): p.read_text()
+                       for p in sorted(d.rglob("*")) if p.is_file()} for d in agent_dirs}
+    if len(agents) != len(agent_dirs):
+        raise SystemExit("agent directories need distinct names")
+    agent_src = (AGENT.replace("__AGENT_JSON__", repr(json.dumps(agents)))
                  .replace("__TASK_JSON__", repr(json.dumps(task_ids))))
     nb = {"cells": [cell(SETUP), cell(agent_src), cell(SERVE), cell(EVALUATE)],
           "metadata": {"kernelspec": {"name": "python3", "display_name": "Python 3", "language": "python"}},

@@ -133,12 +133,13 @@ def main() -> None:
         rows = json.loads(args.patches.read_text())["rows"]
         for r in rows:
             task, patch = tasks[r["id"]], r.get("patch") or ""
+            agent = r.get("agent", "")
             if not patch.strip():
                 result = {"resolved": False, "error": "empty patch"}
             else:
-                result = run_once(args.data, out.parent / r["id"], task, patch)
-            append(out, {"id": r["id"], **result})
-            print(f"{r['id']}: resolved={result['resolved']} {result.get('error') or ''}")
+                result = run_once(args.data, out.parent / agent / r["id"], task, patch)
+            append(out, {"agent": agent, "id": r["id"], **result})
+            print(f"{agent} {r['id']}: resolved={result['resolved']} {result.get('error') or ''}")
         return
 
     for tid in args.task_ids:
