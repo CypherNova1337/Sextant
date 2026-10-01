@@ -1,6 +1,5 @@
 name: sextant
 model: gemma-4-31b-it-qat-w4a16-ct
-description: Resolves one repository issue with a small source patch.
 instruction: !include prompts/system.md
 tools:
   - run_command

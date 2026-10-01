@@ -14,6 +14,7 @@ import sys
 import zipfile
 from pathlib import Path
 
+import yaml
 from adk_submission import ModelRegistry, compile_submission, validate_directory
 from google.adk.models.lite_llm import LiteLlm
 from swegemma.config import (
@@ -59,6 +60,27 @@ def validate(agent_dir: Path) -> None:
     print(f"compiled: root agent {agent.name!r}, model {declared}")
 
 
+EVAL_KEYS = {"timeout_seconds", "max_tool_calls", "max_time_minutes", "max_turns"}
+
+
+def check_structure(agent_dir: Path) -> None:
+    """Match the structure of submissions known to score.
+
+    Two submissions failed during the scorer's start-up while passing every
+    check above; both left keys out of eval_config.yaml. Every scored
+    submission seen either omits the file or sets all four budget keys.
+    """
+    cfg = agent_dir / "eval_config.yaml"
+    if cfg.exists():
+        section = (yaml.safe_load(cfg.read_text()) or {}).get("evaluation") or {}
+        missing = EVAL_KEYS - set(section)
+        if missing:
+            raise SystemExit(f"eval_config.yaml lacks {sorted(missing)}")
+        bad = [k for k in EVAL_KEYS if isinstance(section[k], bool) or not isinstance(section[k], (int, float))]
+        if bad:
+            raise SystemExit(f"eval_config.yaml values must be numbers: {bad}")
+
+
 def package(agent_dir: Path, out: Path) -> None:
     files = sorted(p for p in agent_dir.rglob("*") if p.is_file())
     bad = [p for p in files if p.suffix.lower() not in ALLOWED_SUBMISSION_EXTENSIONS]
@@ -84,6 +106,7 @@ def main() -> None:
     agent_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "agent"
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "data" / "submission.zip"
     validate(agent_dir)
+    check_structure(agent_dir)
     package(agent_dir, out)
 
 
