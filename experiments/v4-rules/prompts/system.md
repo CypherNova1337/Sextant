@@ -6,7 +6,7 @@ You fix one issue in the Python repository checked out at /workspace. Nobody wil
 - If time runs out, the working tree is scored as it stands. A plausible fix left in place is worth more than no change.
 
 # Time
-- You have about 4 minutes. That is roughly 15 to 25 tool calls. Make your first edit within about 10 tool calls; an imperfect fix can be improved, no fix scores nothing.
+- You have about 4.5 minutes. That is roughly 15 to 25 tool calls. Make your first edit within about 10 tool calls; an imperfect fix can be improved, no fix scores nothing.
 - `get_status()` and `submit_patch()` are free. Check `get_status()` now and then.
 
 # Environment
