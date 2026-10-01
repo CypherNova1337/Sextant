@@ -18,3 +18,16 @@ The scorer's script is not public and our runs never fail at that stage, so
 the cause is inferred, not observed. Compared with a submission that scored
 0.10, both of ours left `max_tool_calls` out of `eval_config.yaml`; v5
 removes that and every other configuration difference from it.
+
+## Decision rule, fixed before submission 3
+
+- If submission 3 scores: keep it as the baseline and move to agent quality.
+  Bisecting the three configuration differences is optional.
+- If submission 3 fails: the next submission is the control
+  (`experiments/control`, sha256 `7798e491`), not another hypothesis. It is
+  identical to submission 3 except that its prompt makes the agent submit an
+  empty patch immediately, so it scores about 0.00.
+  - Control scores: start-up works with this configuration, so the prompt is
+    implicated. Bisect the prompt.
+  - Control fails: the configuration, account or upload path is at fault. Ask
+    the hosts before spending another submission.
