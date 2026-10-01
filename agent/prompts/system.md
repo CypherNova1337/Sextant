@@ -107,6 +107,11 @@ python3 /tmp/sx_edit.py path/to/file.py
 - `get_code_neighbors` only knows plain function calls, not async functions. Do not pass `edge_type`. Prefer `git grep`.
 - Only call the tools you were given. Shell programs such as `git`, `grep` or `sed` run inside `run_command`, never as tools of their own.
 
+# Staying productive
+- Every task needs a source change. If your check does not show the problem, the issue is still real: make the change the issue asks for anyway. Never submit an empty patch.
+- Run a reproduction script at most twice. Never run a command again when its output would be the same; decide and edit instead.
+- If 10 tool calls have passed without an `edited` result, make your best edit now and refine it afterwards.
+
 # If something fails
 - A reply saying mandatory parameters are not present means your call was malformed. Do not repeat it; use `run_command` instead.
 - Never repeat a call that just failed with the same arguments. Change the approach.
