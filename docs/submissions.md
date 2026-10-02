@@ -8,7 +8,7 @@ sandbox with `scripts/verify_reference.py`.
 |---|---|---|---|---|---|
 | 1 | 2026-09-30 21:23 | v1: single agent, edit_file, 4 min | `c7dc85c6` | validator and compiler; 3-task GPU run (0 of 3 resolved, every edit_file call malformed) | Notebook Threw Exception |
 | 2 | 2026-10-01 01:03 | v4-rules: run_command edits with helper, anti-loop rules, T 0.6 | `9ec6aa1b` | validator and compiler; 10-task GPU run, 4 of 10 resolved, no exceptions | Notebook Threw Exception, within about 4 minutes |
-| 3 | 2026-10-02 | v5: v4-rules agent, configs matched to a scored submission (all four eval_config keys, 4.5 min, thinking_budget present, no root description) | `ed4706a5` | validator, compiler and structure check; GPU run of these exact files on 4 dev tasks: no exceptions, all within the cap, 3 of 4 resolved (requests_6644, rich_3006, rich_3454; fastapi_14430 empty patch) | Passed start-up; still running after 5 hours (score pending) |
+| 3 | 2026-10-02 | v5: v4-rules agent, configs matched to a scored submission (all four eval_config keys, 4.5 min, thinking_budget present, no root description) | `ed4706a5` | validator, compiler and structure check; GPU run of these exact files on 4 dev tasks: no exceptions, all within the cap, 3 of 4 resolved (requests_6644, rich_3006, rich_3454; fastapi_14430 empty patch) | Public score 0.08 (about 5 of about 60 tasks) |
 
 ## Notes on the two failures
 
@@ -40,3 +40,12 @@ made therefore removed the start-up failure: all four `eval_config.yaml`
 keys, a `thinking_budget` in `sampling.yaml`, and no `description` on the
 root agent. Which of the three it was is not known. All later submissions
 keep all three, and the build script enforces the first.
+
+## Submission 3 score in context
+
+Public leaderboard on 2 October, 1,411 teams: 0.24 (1 team), 0.15 to 0.17
+(18), 0.12 to 0.13 (254), 0.10 (269), 0.08 (267), 0.06 or less (602). Scores
+move in steps of one task, about 0.017. Locally the same agent resolved 4 of
+10 and 3 of 4 dev tasks, but those tasks were chosen for small reference
+patches, so they overstate the hidden-set rate; later local comparisons use a
+random sample of the dev split instead.
