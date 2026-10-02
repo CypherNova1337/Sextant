@@ -11,7 +11,9 @@ from pathlib import Path
 
 import pytest
 
-PROMPT = Path(__file__).resolve().parent.parent / "agent" / "prompts" / "system.md"
+ROOT = Path(__file__).resolve().parent.parent
+PROMPTS = [ROOT / "agent" / "prompts" / "system.md"] + sorted(
+    p for p in (ROOT / "experiments").glob("*/prompts/system.md") if "SEXTANT_HELPER" in p.read_text())
 SOURCE = '''import re
 class A:
     _escape = re.compile(r"(\\\\*)(\\[[a-z#/@][^[]*?])").sub
@@ -22,17 +24,17 @@ class A:
 y = 5'''
 
 
-def helper_source() -> str:
-    match = re.search(r"<<'SEXTANT_HELPER'\n(.*?)SEXTANT_HELPER\n", PROMPT.read_text(), re.S)
+def helper_source(prompt: Path) -> str:
+    match = re.search(r"<<'SEXTANT_HELPER'\n(.*?)SEXTANT_HELPER\n", prompt.read_text(), re.S)
     assert match, "helper install block not found in the prompt"
     return match.group(1)
 
 
-@pytest.fixture
-def edit(tmp_path, monkeypatch):
+@pytest.fixture(params=PROMPTS, ids=lambda p: p.parent.parent.name)
+def edit(request, tmp_path):
     helper = tmp_path / "sx_edit.py"
     # The helper reads /tmp/old and /tmp/new; point it at the test directory.
-    helper.write_text(helper_source().replace('"/tmp/old"', repr(str(tmp_path / "old")))
+    helper.write_text(helper_source(request.param).replace('"/tmp/old"', repr(str(tmp_path / "old")))
                       .replace('"/tmp/new"', repr(str(tmp_path / "new"))))
     target = tmp_path / "m.py"
     target.write_text(SOURCE)
