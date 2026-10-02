@@ -64,5 +64,5 @@ the repository's own package is left out of the wheel set (otherwise the
 tests import the released wheel instead of the repository); each dependency
 is limited to the versions the snapshot's `pyproject.toml` allows (otherwise
 the harness installs the newest wheel, e.g. a starlette too new for older
-fastapi); and fastapi gets `typing_inspection` and `inline_snapshot`, which
+fastapi); and fastapi gets `typing_inspection`, `python-multipart` and `inline_snapshot`, which
 its tests need and the public wheel set lacks (in `data/wheels_extra/fastapi/`).

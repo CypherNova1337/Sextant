@@ -6,7 +6,7 @@
 cd "$(dirname "$0")/.."
 out=runs/reference/dev.jsonl
 mkdir -p runs/reference
-keep="rich_3454 rich_4077 rich_3006 rich_3063 requests_7315 fastapi_14430 rich_3480 rich_3278 requests_6644 rich_3043"
+keep="rich_3454 rich_4077 rich_3006 rich_3063 requests_7315 fastapi_14430 rich_3480 rich_3278 requests_6644 rich_3043 fastapi_14786 fastapi_14297 fastapi_14616 rich_3905"
 for t in $(cat splits/dev.txt); do
     grep -q "\"id\": \"$t\"" "$out" 2>/dev/null && continue
     snap=data/snapshots/$t.tgz

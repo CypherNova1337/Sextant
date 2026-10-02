@@ -19,7 +19,7 @@ hidden-set repository would:
   - each dependency is limited to the versions the snapshot's pyproject.toml
     allows, since the harness otherwise installs the newest wheel of each;
   - wheels in data/wheels_extra/<package>/ are added for that repository only
-    (for fastapi: typing_inspection and inline_snapshot with its dependencies,
+    (for fastapi: typing_inspection, python-multipart and inline_snapshot with its dependencies,
     which its tests need and the public wheel set lacks).
 
 Usage:
