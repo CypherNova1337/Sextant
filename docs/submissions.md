@@ -8,7 +8,7 @@ sandbox with `scripts/verify_reference.py`.
 |---|---|---|---|---|---|
 | 1 | 2026-09-30 21:23 | v1: single agent, edit_file, 4 min | `c7dc85c6` | validator and compiler; 3-task GPU run (0 of 3 resolved, every edit_file call malformed) | Notebook Threw Exception |
 | 2 | 2026-10-01 01:03 | v4-rules: run_command edits with helper, anti-loop rules, T 0.6 | `9ec6aa1b` | validator and compiler; 10-task GPU run, 4 of 10 resolved, no exceptions | Notebook Threw Exception, within about 4 minutes |
-| 3 | pending | v5: v4-rules agent, configs matched to a scored submission (all four eval_config keys, 4.5 min, thinking_budget present, no root description) | `ed4706a5` | validator, compiler and structure check; GPU run of these exact files on 4 dev tasks: no exceptions, all within the cap, 3 of 4 resolved (requests_6644, rich_3006, rich_3454; fastapi_14430 empty patch) | |
+| 3 | 2026-10-02 | v5: v4-rules agent, configs matched to a scored submission (all four eval_config keys, 4.5 min, thinking_budget present, no root description) | `ed4706a5` | validator, compiler and structure check; GPU run of these exact files on 4 dev tasks: no exceptions, all within the cap, 3 of 4 resolved (requests_6644, rich_3006, rich_3454; fastapi_14430 empty patch) | Passed start-up; still running after 5 hours (score pending) |
 
 ## Notes on the two failures
 
@@ -31,3 +31,12 @@ removes that and every other configuration difference from it.
     implicated. Bisect the prompt.
   - Control fails: the configuration, account or upload path is at fault. Ask
     the hosts before spending another submission.
+
+## What submission 3 showed
+
+It passed the scorer's start-up, where submissions 1 and 2 failed, and was
+still running after five hours. One of the three configuration changes it
+made therefore removed the start-up failure: all four `eval_config.yaml`
+keys, a `thinking_budget` in `sampling.yaml`, and no `description` on the
+root agent. Which of the three it was is not known. All later submissions
+keep all three, and the build script enforces the first.
