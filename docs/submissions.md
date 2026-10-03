@@ -49,3 +49,22 @@ move in steps of one task, about 0.017. Locally the same agent resolved 4 of
 10 and 3 of 4 dev tasks, but those tasks were chosen for small reference
 patches, so they overstate the hidden-set rate; later local comparisons use a
 random sample of the dev split instead.
+
+## v6 candidate (checked 3 October)
+
+GPU run of the exact v5 and v6 files on five dev tasks drawn at random
+(seeded hash), all with reference fixes confirmed in the local Docker
+sandbox first, patches re-scored locally:
+
+| Task | v5 | v6 |
+|---|---|---|
+| fastapi_14786 | resolved | resolved |
+| fastapi_14297 | resolved | resolved |
+| fastapi_14616 | 60-turn limit, no patch (50 file reads) | 60-turn limit, no patch (one command 19 times) |
+| rich_3905 | resolved | resolved |
+| rich_3043 | time limit, no patch (one edit attempted 19 times) | resolved in 139 s |
+
+v6 resolved 4 of 5, v5 3 of 5, on the same tasks; v6 used its ranker on all
+five; no exceptions; every task inside the cap. Both versions reached the
+60-turn limit on fastapi_14616 well before the time limit, so the turn limit
+binds; raising it is the next single change. Five tasks is a small sample.
