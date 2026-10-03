@@ -68,3 +68,33 @@ v6 resolved 4 of 5, v5 3 of 5, on the same tasks; v6 used its ranker on all
 five; no exceptions; every task inside the cap. Both versions reached the
 60-turn limit on fastapi_14616 well before the time limit, so the turn limit
 binds; raising it is the next single change. Five tasks is a small sample.
+
+## v7, v8 and v9 candidates (checked 3 October)
+
+v6 scored 0.08 on the public leaderboard, the same as v5, although it
+resolved one more of the five gate tasks. A five-task gate can't separate
+agents that differ by one task in twenty, so a gate result now shows only
+that a candidate runs cleanly. It doesn't show that the candidate will score
+higher.
+
+Same five tasks, patches re-scored locally in Docker:
+
+| Task | v7 | v8 | v9 |
+|---|---|---|---|
+| fastapi_14786 | resolved | resolved | resolved (47 s) |
+| fastapi_14297 | not resolved | resolved | resolved (50 s) |
+| fastapi_14616 | not run | crash: context window exceeded | 58 calls, no patch |
+| rich_3905 | not run | resolved | resolved |
+| rich_3043 | not run | resolved | resolved |
+
+- v7 (100 turns, 5.5 minutes): more budget bought more repetition. Dropped.
+- v8 (v6 plus a read-only investigator sub-agent): the crash came from the
+  investigator. Its read_file calls arrived with malformed keys
+  (`"start_line\""`), so no line range applied and each call returned the
+  full 150 lines. Its context grew from 2,102 to 27,635 tokens. Compaction
+  doesn't run inside an agent tool, so the window overflowed and the task's
+  patch was lost. An exception loses that task only, not the run.
+- v9 (v8 with the helpers shipped as a skill, prompt 5.7 KB instead of
+  8.5 KB): no errors, and faster on the easy tasks. The overflow above can
+  still happen. Skills haven't been tested on the real scorer.
+  data/v9.zip, sha256 04b4d0b68266.
