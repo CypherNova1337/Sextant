@@ -23,6 +23,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 AGENT_DIR = ROOT / "agent"
+HOST_IMAGE = "gcr.io/kaggle-private-byod/python@sha256:37c64f7dd9c54116ecd1bcc88817c5469b88387388fade02bfa8bf3fc647d461"
 
 SETUP = r'''
 import glob, importlib, json, os, shutil, subprocess, sys, time
@@ -194,6 +195,10 @@ def main() -> None:
         "language": "python", "kernel_type": "notebook", "is_private": True,
         "enable_gpu": True, "enable_tpu": False, "enable_internet": False,
         "machine_shape": "NvidiaL4",
+        # The hosts' getting-started notebook runs on this image. Kaggle's default
+        # image moved to Python 3.13, where the harness's cp312 wheels do not install.
+        "docker_image": HOST_IMAGE,
+        "docker_image_pinning_type": "original",
         "dataset_sources": ["metric/gemma-4-developer-agent-wheelhouse"],
         "competition_sources": ["gemma-4-developer-agent"],
         "kernel_sources": [],
