@@ -10,7 +10,7 @@ sandbox with `scripts/verify_reference.py`.
 | 2 | 2026-10-01 01:03 | v4-rules: run_command edits with helper, anti-loop rules, T 0.6 | `9ec6aa1b` | validator and compiler; 10-task GPU run, 4 of 10 resolved, no exceptions | Notebook Threw Exception, within about 4 minutes |
 | 3 | 2026-10-02 | v5: v4-rules agent, configs matched to a scored submission (all four eval_config keys, 4.5 min, thinking_budget present, no root description) | `ed4706a5` | validator, compiler and structure check; GPU run of these exact files on 4 dev tasks: no exceptions, all within the cap, 3 of 4 resolved (requests_6644, rich_3006, rich_3454; fastapi_14430 empty patch) | Public score 0.08 (about 5 of about 60 tasks) |
 | 4 | 2026-10-03 | v6: v5 plus the sx_find ranker, reproduce at most once, no git stash/checkout/reset | `f42e1b5c` | validator, compiler and structure check; GPU run of these exact files on 5 random dev tasks: 4 of 5 resolved, no exceptions | Public score 0.08 |
-| 5 | 2026-10-04 00:00 | v9: investigator sub-agent, edit/search helpers shipped as a skill, 4.5 min | `04b4d0b6` | validator, compiler and structure check; GPU run of these exact files on the same 5 tasks: 4 of 5 resolved, no exceptions | pending |
+| 5 | 2026-10-04 00:00 | v9: investigator sub-agent, edit/search helpers shipped as a skill, 4.5 min | `04b4d0b6` | validator, compiler and structure check; GPU run of these exact files on the same 5 tasks: 4 of 5 resolved, no exceptions | Public score 0.08 |
 
 ## Notes on the two failures
 
