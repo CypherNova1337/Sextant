@@ -8,7 +8,9 @@ the subprocess sandbox, which sees the host's installed packages; re-score the
 patches locally with scripts/verify_reference.py --patches for a faithful result.
 
 Usage:
-  python scripts/make_eval_notebook.py OUT_DIR SLUG TASK_ID [...] [--agent DIR ...]
+  python scripts/make_eval_notebook.py OUT_DIR SLUG TASK_ID [...] [--agent DIR ...] [--dataset OWNER/SLUG ...]
+--dataset adds a private dataset of extra tasks (tasks.jsonl and snapshots/,
+as scripts/build_feature_set.py writes them) to the notebook's inputs.
 Several --agent directories are evaluated against one model server, task by
 task, which saves the server start-up for every extra variant.
 Then:
@@ -113,7 +115,24 @@ def run_sync(fn, **kw):
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         return pool.submit(lambda: asyncio.run(fn(**kw))).result()
 
-data = Path(sorted(glob.glob("/kaggle/input/**/tasks.jsonl", recursive=True))[0]).parent
+# Merge every tasks.jsonl under /kaggle/input (the competition's public tasks
+# and any extra task datasets) into one directory the Evaluator can read.
+sources = [Path(p).parent for p in sorted(glob.glob("/kaggle/input/**/tasks.jsonl", recursive=True))]
+base = next(d for d in sources if (d / "wheels").is_dir())
+data = Path("/kaggle/working/data"); (data / "snapshots").mkdir(parents=True, exist_ok=True)
+with open(data / "tasks.jsonl", "w") as merged:
+    for d in sources:
+        merged.write((d / "tasks.jsonl").read_text().rstrip("\n") + "\n")
+        links = {snap.name: snap for snap in (d / "snapshots").glob("*")}
+        if (d / "aliases.json").exists():  # task id -> shared base snapshot
+            for tid, snap in json.loads((d / "aliases.json").read_text()).items():
+                links[f"{tid}.tgz"] = d / "snapshots" / snap
+        for name, snap in links.items():
+            if not (data / "snapshots" / name).exists():
+                os.symlink(snap, data / "snapshots" / name)
+for name in ("graphs", "embeddings", "wheels", "sandbox"):
+    if (base / name).exists() and not (data / name).exists():
+        os.symlink(base / name, data / name)
 tasks = {t.instance_id: t for t in load_tasks(data / "tasks.jsonl")}
 limits, constraints = build_submission_limits()
 
@@ -172,6 +191,8 @@ def main() -> None:
     parser.add_argument("task_ids", nargs="+")
     parser.add_argument("--agent", action="append", type=Path,
                         help="agent directory; repeat to compare variants (default: agent/)")
+    parser.add_argument("--dataset", action="append", default=[],
+                        help="extra Kaggle dataset holding tasks.jsonl and snapshots/ (owner/slug)")
     args = parser.parse_args()
     out, slug, task_ids = args.out, args.slug, args.task_ids
     agent_dirs = [d.resolve() for d in (args.agent or [AGENT_DIR])]
@@ -199,7 +220,7 @@ def main() -> None:
         # image moved to Python 3.13, where the harness's cp312 wheels do not install.
         "docker_image": HOST_IMAGE,
         "docker_image_pinning_type": "original",
-        "dataset_sources": ["metric/gemma-4-developer-agent-wheelhouse"],
+        "dataset_sources": ["metric/gemma-4-developer-agent-wheelhouse", *args.dataset],
         "competition_sources": ["gemma-4-developer-agent"],
         "kernel_sources": [],
         "model_sources": ["google/gemma-4/Other/gemma-4-31b-it-qat-w4a16-ct/2"],

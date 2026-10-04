@@ -1,0 +1,41 @@
+diff --git a/tests/test_filesize_parse.py b/tests/test_filesize_parse.py
+new file mode 100644
+index 00000000..cdbf9e54
+--- /dev/null
++++ b/tests/test_filesize_parse.py
+@@ -0,0 +1,35 @@
++import pytest
++
++from rich import filesize
++
++
++@pytest.mark.parametrize(
++    "text, expected",
++    [
++        ("1 byte", 1),
++        ("0 bytes", 0),
++        ("1,000 bytes", 1000),
++        ("1.5 kB", 1500),
++        ("30.00kB", 30000),
++        ("2.0 MB", 2000000),
++        ("  3 GB ", 3000000000),
++        ("1.0 YB", 10**24),
++    ],
++)
++def test_parse(text, expected):
++    assert filesize.parse(text) == expected
++
++
++@pytest.mark.parametrize("size", [1, 999, 1000, 1234, 30000, 123456789, 10**12])
++def test_round_trip(size):
++    assert abs(filesize.parse(filesize.decimal(size, precision=3)) - size) <= max(1, size // 1000)
++
++
++@pytest.mark.parametrize("text", ["", "kB", "1.5 kb", "1.5 KiB", "abc", "-1 kB", "1..5 kB"])
++def test_invalid(text):
++    with pytest.raises(ValueError):
++        filesize.parse(text)
++
++
++def test_exported():
++    assert "parse" in filesize.__all__

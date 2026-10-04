@@ -1,0 +1,31 @@
+diff --git a/tests/test_status_props.py b/tests/test_status_props.py
+new file mode 100644
+index 00000000..a39b6a7f
+--- /dev/null
++++ b/tests/test_status_props.py
+@@ -0,0 +1,25 @@
++import pytest
++
++from requests.models import Response
++
++
++def make(code):
++    r = Response()
++    r.status_code = code
++    return r
++
++
++@pytest.mark.parametrize("code, client, server", [
++    (200, False, False), (399, False, False), (400, True, False), (404, True, False),
++    (499, True, False), (500, False, True), (503, False, True), (599, False, True), (600, False, False),
++])
++def test_props(code, client, server):
++    r = make(code)
++    assert r.is_client_error is client
++    assert r.is_server_error is server
++
++
++def test_none():
++    r = Response()
++    assert r.is_client_error is False
++    assert r.is_server_error is False

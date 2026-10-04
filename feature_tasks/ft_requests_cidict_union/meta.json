@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_requests_cidict_union",
+ "repo": "psf/requests",
+ "snapshot": "requests_7315",
+ "problem_statement": "Support | and |= on CaseInsensitiveDict\n\n`dict` supports the union operators, but `requests.structures.CaseInsensitiveDict` does not. Please add them:\n\n- `a | b` returns a new `CaseInsensitiveDict` with the items of `a` updated by those of `b`. Keys match case-insensitively, and the casing of the key from `b` wins.\n- `a |= b` updates `a` in place and returns it.\n- `b` may be another `CaseInsensitiveDict` or any mapping. For anything else the operators return `NotImplemented`, so Python raises `TypeError`.\n- `dict | CaseInsensitiveDict` (the reflected case) returns a `CaseInsensitiveDict` too.\n",
+ "hints_text": ""
+}

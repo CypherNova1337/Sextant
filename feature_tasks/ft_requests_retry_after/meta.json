@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_requests_retry_after",
+ "repo": "psf/requests",
+ "snapshot": "requests_7315",
+ "problem_statement": "Helper to parse Retry-After headers\n\nAdd a new module `requests/retry_after.py` (the package lives under `src/`) with\n\n    parse_retry_after(value, now=None) -> float | None\n\nIt returns the number of seconds to wait, as a float:\n\n- An integer number of seconds such as `\"120\"` gives `120.0` (surrounding whitespace allowed).\n- An HTTP-date such as `\"Wed, 21 Oct 2015 07:28:00 GMT\"` gives the seconds from `now` until that date, and `0.0` if the date is in the past. `now` is a timezone-aware datetime and defaults to the current UTC time.\n- `None`, an empty string, a negative number or anything unparseable gives `None`.\n\nAlso make it importable as `requests.utils.parse_retry_after`.\n",
+ "hints_text": ""
+}

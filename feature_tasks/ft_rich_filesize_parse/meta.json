@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_rich_filesize_parse",
+ "repo": "Textualize/rich",
+ "snapshot": "rich_4077",
+ "problem_statement": "Parse human-readable file sizes back into bytes\n\n`rich.filesize.decimal` turns a byte count into text such as `1.5 kB`, but there is no way back. Please add `rich.filesize.parse(text: str) -> int`.\n\n- It accepts what `decimal` produces: `\"1 byte\"`, `\"1,000 bytes\"`, `\"1.5 kB\"`, `\"2.0 MB\"`, and the units kB, MB, GB, TB, PB, EB, ZB and YB (powers of 1000).\n- The space between number and unit is optional (`\"30.00kB\"` works), and surrounding whitespace is ignored.\n- Commas in the number are allowed. Units are case-sensitive.\n- The result is rounded to the nearest int: `parse(\"1.5 kB\") == 1500`.\n- Anything else raises `ValueError`.\n- Add `parse` to the module's `__all__`.\n",
+ "hints_text": ""
+}

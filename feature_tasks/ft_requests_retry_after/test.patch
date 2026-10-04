@@ -1,0 +1,43 @@
+diff --git a/tests/test_retry_after.py b/tests/test_retry_after.py
+new file mode 100644
+index 00000000..ff4f00ee
+--- /dev/null
++++ b/tests/test_retry_after.py
+@@ -0,0 +1,37 @@
++from datetime import datetime, timedelta, timezone
++
++import pytest
++
++from requests.retry_after import parse_retry_after
++
++NOW = datetime(2015, 10, 21, 7, 0, 0, tzinfo=timezone.utc)
++
++
++def test_seconds():
++    assert parse_retry_after("120") == 120.0
++    assert parse_retry_after(" 0 ") == 0.0
++
++
++def test_http_date():
++    assert parse_retry_after("Wed, 21 Oct 2015 07:28:00 GMT", now=NOW) == 28 * 60.0
++
++
++def test_past_date():
++    assert parse_retry_after("Wed, 21 Oct 2015 06:00:00 GMT", now=NOW) == 0.0
++
++
++def test_default_now():
++    future = datetime.now(timezone.utc) + timedelta(hours=1)
++    value = future.strftime("%a, %d %b %Y %H:%M:%S GMT")
++    assert 3500 < parse_retry_after(value) <= 3600
++
++
++@pytest.mark.parametrize("value", [None, "", "  ", "-5", "soon", "1.5x"])
++def test_invalid(value):
++    assert parse_retry_after(value) is None
++
++
++def test_reexported():
++    from requests import utils
++
++    assert utils.parse_retry_after is parse_retry_after

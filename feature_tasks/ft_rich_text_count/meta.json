@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_rich_text_count",
+ "repo": "Textualize/rich",
+ "snapshot": "rich_4077",
+ "problem_statement": "Add Text.count\n\n`rich.text.Text` supports `in` but cannot count occurrences. Add a method\n\n    Text.count(sub: str, case_sensitive: bool = True) -> int\n\nthat returns the number of non-overlapping occurrences of `sub` in the plain text. `sub` may also be a `Text`, in which case its plain text is used. With `case_sensitive=False` the comparison ignores case. An empty `sub` raises `ValueError`.\n",
+ "hints_text": ""
+}

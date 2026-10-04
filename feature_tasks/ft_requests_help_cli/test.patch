@@ -1,0 +1,46 @@
+diff --git a/tests/test_help_cli.py b/tests/test_help_cli.py
+new file mode 100644
+index 00000000..a1b4314a
+--- /dev/null
++++ b/tests/test_help_cli.py
+@@ -0,0 +1,40 @@
++import json
++import subprocess
++import sys
++
++from requests import help as requests_help
++
++
++def test_default(capsys):
++    assert requests_help.main([]) == 0
++    out = capsys.readouterr().out
++    assert out.startswith("{\n")
++    assert json.loads(out) == json.loads(json.dumps(requests_help.info()))
++
++
++def test_compact(capsys):
++    assert requests_help.main(["--compact"]) == 0
++    out = capsys.readouterr().out
++    assert out.count("\n") == 1
++    assert ", " not in out and '": ' not in out
++    assert json.loads(out)["requests"]["version"]
++
++
++def test_key(capsys):
++    assert requests_help.main(["--key", "requests", "--compact"]) == 0
++    out = capsys.readouterr().out.strip()
++    assert out == json.dumps(requests_help.info()["requests"], sort_keys=True, separators=(",", ":"))
++
++
++def test_unknown_key(capsys):
++    assert requests_help.main(["--key", "nope"]) == 1
++    captured = capsys.readouterr()
++    assert "unknown key: nope" in captured.err
++    assert captured.out == ""
++
++
++def test_module_exit_status():
++    result = subprocess.run(
++        [sys.executable, "-m", "requests.help", "--key", "nope"], capture_output=True, text=True
++    )
++    assert result.returncode == 1

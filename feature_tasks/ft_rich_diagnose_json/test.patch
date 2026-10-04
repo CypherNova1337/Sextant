@@ -1,0 +1,33 @@
+diff --git a/tests/test_diagnose_json.py b/tests/test_diagnose_json.py
+new file mode 100644
+index 00000000..a2288827
+--- /dev/null
++++ b/tests/test_diagnose_json.py
+@@ -0,0 +1,27 @@
++import json
++import os
++import subprocess
++import sys
++
++from rich.diagnose import collect
++
++
++def test_collect(monkeypatch):
++    monkeypatch.setenv("COLUMNS", "123")
++    monkeypatch.delenv("NO_COLOR", raising=False)
++    data = collect()
++    assert set(data) == {"platform", "env"}
++    assert data["env"]["COLUMNS"] == "123"
++    assert data["env"]["NO_COLOR"] is None
++    assert "TERM_PROGRAM" in data["env"]
++
++
++def test_json_option():
++    env = dict(os.environ, TERM="xterm-test")
++    result = subprocess.run(
++        [sys.executable, "-m", "rich.diagnose", "--json"], capture_output=True, text=True, env=env
++    )
++    assert result.returncode == 0
++    data = json.loads(result.stdout)
++    assert data["env"]["TERM"] == "xterm-test"
++    assert isinstance(data["platform"], str)

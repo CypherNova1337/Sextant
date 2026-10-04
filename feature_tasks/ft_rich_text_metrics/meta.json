@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_rich_text_metrics",
+ "repo": "Textualize/rich",
+ "snapshot": "rich_4077",
+ "problem_statement": "New module rich.text_metrics\n\nSeveral of our renderables measure multi-line strings by hand. Please add a small module `rich/text_metrics.py` with:\n\n- `line_widths(text: str) -> list[int]`: the cell width of each line, measured with `rich.cells.cell_len`, splitting with `str.splitlines()`. An empty string gives `[]`.\n- `widest_line(text: str) -> int`: the largest of those widths, or `0` for an empty string.\n\nWide characters (for example CJK) count as two cells, as in the rest of Rich.\n",
+ "hints_text": ""
+}

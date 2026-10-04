@@ -1,0 +1,35 @@
+diff --git a/rich/filesize.py b/rich/filesize.py
+index 83bc9118..63a632ff 100644
+--- a/rich/filesize.py
++++ b/rich/filesize.py
+@@ -10,8 +10,9 @@ See Also:
+ 
+ """
+ 
+-__all__ = ["decimal"]
++__all__ = ["decimal", "parse"]
+ 
++import re
+ from typing import Iterable, List, Optional, Tuple
+ 
+ 
+@@ -86,3 +87,19 @@ def decimal(
+         precision=precision,
+         separator=separator,
+     )
++
++
++_SIZE_UNITS = {"kB": 1, "MB": 2, "GB": 3, "TB": 4, "PB": 5, "EB": 6, "ZB": 7, "YB": 8}
++_SIZE_RE = re.compile(r"^([0-9][0-9,]*(?:\.[0-9]+)?)\s*(bytes?|[kMGTPEZY]B)$")
++
++
++def parse(text: str) -> int:
++    """Convert a size produced by :func:`decimal` back into a number of bytes."""
++    match = _SIZE_RE.match(text.strip())
++    if match is None:
++        raise ValueError(f"invalid file size: {text!r}")
++    number, unit = match.groups()
++    value = float(number.replace(",", ""))
++    if unit in ("byte", "bytes"):
++        return int(round(value))
++    return int(round(value * 1000 ** _SIZE_UNITS[unit]))

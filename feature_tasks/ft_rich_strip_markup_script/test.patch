@@ -1,0 +1,47 @@
+diff --git a/tests/test_strip_markup_script.py b/tests/test_strip_markup_script.py
+new file mode 100644
+index 00000000..c601442d
+--- /dev/null
++++ b/tests/test_strip_markup_script.py
+@@ -0,0 +1,41 @@
++import importlib.util
++import subprocess
++import sys
++from pathlib import Path
++
++SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "strip_markup.py"
++
++
++def run(*args, stdin=None):
++    return subprocess.run(
++        [sys.executable, str(SCRIPT), *args], input=stdin, capture_output=True, text=True
++    )
++
++
++def test_file(tmp_path):
++    source = tmp_path / "in.txt"
++    source.write_text("[bold]Hello[/bold], [red]World[/red]!\nbye\n")
++    result = run(str(source))
++    assert result.returncode == 0
++    assert result.stdout == "Hello, World!\nbye\n"
++
++
++def test_stdin():
++    result = run("-", stdin="[i]x[/i] y")
++    assert result.returncode == 0
++    assert result.stdout == "x y"
++
++
++def test_missing(tmp_path):
++    missing = tmp_path / "nope.txt"
++    result = run(str(missing))
++    assert result.returncode == 2
++    assert f"error: no such file: {missing}" in result.stderr
++    assert result.stdout == ""
++
++
++def test_importable():
++    spec = importlib.util.spec_from_file_location("strip_markup", SCRIPT)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    assert module.strip_markup("[b]a[/b]b") == "ab"

@@ -1,0 +1,49 @@
+diff --git a/src/requests/retry_after.py b/src/requests/retry_after.py
+new file mode 100644
+index 00000000..bd9b140d
+--- /dev/null
++++ b/src/requests/retry_after.py
+@@ -0,0 +1,31 @@
++"""
++requests.retry_after
++~~~~~~~~~~~~~~~~~~~~
++
++Parse the value of a Retry-After header.
++"""
++
++from datetime import datetime, timezone
++from email.utils import parsedate_to_datetime
++
++
++def parse_retry_after(value, now=None):
++    """Return the seconds to wait that a Retry-After value asks for, or None."""
++    if value is None:
++        return None
++    value = value.strip()
++    if not value:
++        return None
++    if value.isdigit():
++        return float(int(value))
++    try:
++        when = parsedate_to_datetime(value)
++    except (TypeError, ValueError, IndexError):
++        return None
++    if when is None:
++        return None
++    if when.tzinfo is None:
++        when = when.replace(tzinfo=timezone.utc)
++    if now is None:
++        now = datetime.now(timezone.utc)
++    return max(0.0, (when - now).total_seconds())
+diff --git a/src/requests/utils.py b/src/requests/utils.py
+index 42238375..3a236f66 100644
+--- a/src/requests/utils.py
++++ b/src/requests/utils.py
+@@ -55,6 +55,7 @@ from .exceptions import (
+     InvalidURL,
+     UnrewindableBodyError,
+ )
++from .retry_after import parse_retry_after  # noqa: F401
+ from .structures import CaseInsensitiveDict
+ 
+ NETRC_FILES = (".netrc", "_netrc")

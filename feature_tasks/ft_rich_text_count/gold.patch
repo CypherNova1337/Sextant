@@ -1,0 +1,30 @@
+diff --git a/rich/text.py b/rich/text.py
+index 7e087a4e..9302e98d 100644
+--- a/rich/text.py
++++ b/rich/text.py
+@@ -195,6 +195,25 @@ class Text(JupyterMixin):
+             return other.plain in self.plain
+         return False
+ 
++    def count(self, sub: Union[str, "Text"], case_sensitive: bool = True) -> int:
++        """Count the non-overlapping occurrences of a substring in the plain text.
++
++        Args:
++            sub (Union[str, Text]): Substring to count.
++            case_sensitive (bool, optional): Match case. Defaults to True.
++
++        Returns:
++            int: Number of occurrences.
++        """
++        needle = sub.plain if isinstance(sub, Text) else sub
++        if not needle:
++            raise ValueError("sub must not be empty")
++        haystack = self.plain
++        if not case_sensitive:
++            needle = needle.lower()
++            haystack = haystack.lower()
++        return haystack.count(needle)
++
+     def __getitem__(self, slice: Union[int, slice]) -> "Text":
+         def get_text_at(offset: int) -> "Text":
+             _Span = Span

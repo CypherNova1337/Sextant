@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_requests_status_props",
+ "repo": "psf/requests",
+ "snapshot": "requests_7315",
+ "problem_statement": "Response.is_client_error and Response.is_server_error\n\n`Response.ok` lumps every status below 400 together. Please add two read-only properties to `requests.models.Response`:\n\n- `is_client_error`: True when `status_code` is between 400 and 499 inclusive.\n- `is_server_error`: True when `status_code` is between 500 and 599 inclusive.\n\nBoth are False when `status_code` is `None`.\n",
+ "hints_text": ""
+}
