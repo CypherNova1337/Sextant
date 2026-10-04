@@ -100,3 +100,26 @@ Same five tasks, patches re-scored locally in Docker:
   8.5 KB): no errors, and faster on the easy tasks. The overflow above can
   still happen. Skills haven't been tested on the real scorer.
   data/v9.zip, sha256 04b4d0b68266.
+
+## Feature-task check of v9 and v10 (4 October)
+
+Ten feature tasks (feature_tasks/: new scripts, modules, options, methods),
+reference fixes confirmed in the slim sandbox. GPU run of both agents,
+patches re-scored locally:
+
+- v9: 8 of 10 (empty patches on requests_status_props, a time-out, and
+  rich_filesize_parse, after 57 calls).
+- v10: 8 of 10 (cidict_union lacked the reflected `__ror__`; filesize_parse
+  accepted a negative size).
+
+The agent handles explicit feature tasks on these repositories as well as it
+handles their bug fixes. Feature tasks alone don't explain the 0.08.
+
+What does: submission 3 took 8 to 9 hours on about 120 tasks with a
+4.5-minute cap, which means an average of at least 4 minutes per task with
+setup and verification included. So nearly every hidden task ran the agent to
+or close to the cap. Locally the same agent finishes most tasks in 1 to 3
+minutes. Either the hidden tasks are much harder for the model (unfamiliar
+private code it has never seen, unlike rich, requests and fastapi, which it
+knows from training), or the scoring sandbox is slower per command. Both cut
+the number of useful calls per task.
