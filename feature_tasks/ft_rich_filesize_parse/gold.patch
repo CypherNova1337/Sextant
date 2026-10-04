@@ -1,8 +1,8 @@
 diff --git a/rich/filesize.py b/rich/filesize.py
-index 83bc9118..63a632ff 100644
+index 83bc9118..467177d5 100644
 --- a/rich/filesize.py
 +++ b/rich/filesize.py
-@@ -10,8 +10,9 @@ See Also:
+@@ -10,8 +10,10 @@ See Also:
  
  """
  
@@ -10,10 +10,11 @@ index 83bc9118..63a632ff 100644
 +__all__ = ["decimal", "parse"]
  
 +import re
++from decimal import ROUND_HALF_EVEN, Decimal
  from typing import Iterable, List, Optional, Tuple
  
  
-@@ -86,3 +87,19 @@ def decimal(
+@@ -86,3 +88,19 @@ def decimal(
          precision=precision,
          separator=separator,
      )
@@ -29,7 +30,7 @@ index 83bc9118..63a632ff 100644
 +    if match is None:
 +        raise ValueError(f"invalid file size: {text!r}")
 +    number, unit = match.groups()
-+    value = float(number.replace(",", ""))
-+    if unit in ("byte", "bytes"):
-+        return int(round(value))
-+    return int(round(value * 1000 ** _SIZE_UNITS[unit]))
++    value = Decimal(number.replace(",", ""))
++    if unit not in ("byte", "bytes"):
++        value *= 1000 ** _SIZE_UNITS[unit]
++    return int(value.to_integral_value(rounding=ROUND_HALF_EVEN))

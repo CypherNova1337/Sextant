@@ -123,10 +123,11 @@ data = Path("/kaggle/working/data"); (data / "snapshots").mkdir(parents=True, ex
 with open(data / "tasks.jsonl", "w") as merged:
     for d in sources:
         merged.write((d / "tasks.jsonl").read_text().rstrip("\n") + "\n")
-        links = {snap.name: snap for snap in (d / "snapshots").glob("*")}
+        # Snapshots sit in snapshots/, or at the top level of an uploaded dataset.
+        links = {snap.name: snap for snap in [*(d / "snapshots").glob("*"), *d.glob("*.tgz")]}
         if (d / "aliases.json").exists():  # task id -> shared base snapshot
             for tid, snap in json.loads((d / "aliases.json").read_text()).items():
-                links[f"{tid}.tgz"] = d / "snapshots" / snap
+                links[f"{tid}.tgz"] = links[snap]
         for name, snap in links.items():
             if not (data / "snapshots" / name).exists():
                 os.symlink(snap, data / "snapshots" / name)
