@@ -123,3 +123,22 @@ minutes. Either the hidden tasks are much harder for the model (unfamiliar
 private code it has never seen, unlike rich, requests and fastapi, which it
 knows from training), or the scoring sandbox is slower per command. Both cut
 the number of useful calls per task.
+
+## Why v9 and v10 waste turns (traces, 5 October)
+
+Classifying every tool call in the saved GPU traces:
+
+- In v9 and v10 the model repeatedly typed the skill installer as a shell
+  command (`run_skill_script skill_name=...` inside run_command), which
+  always fails: 94 of v10's 265 calls on the feature tasks, 125 of v9's 290,
+  and 54 of v9's 184 on the gate tasks. Submission 5 (v9) carried this.
+- read_file arguments arrive mangled (line numbers glued into the path), and
+  the model then repeats the identical failing call: 21 times in a row on
+  fastapi_14616.
+- v6, which installs the helpers with a single plain run_command, failed 2 to
+  8% of its calls.
+
+With the 60-turn cap binding (each model turn takes 1 to 2 seconds), those
+failures cost tasks directly. v11 is v10's method with v6's install command,
+no skill, and file reading through `sed -n` instead of read_file.
+data/v11.zip, sha256 a6814a0c40a8.
