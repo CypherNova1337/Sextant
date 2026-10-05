@@ -142,3 +142,10 @@ With the 60-turn cap binding (each model turn takes 1 to 2 seconds), those
 failures cost tasks directly. v11 is v10's method with v6's install command,
 no skill, and file reading through `sed -n` instead of read_file.
 data/v11.zip, sha256 a6814a0c40a8.
+
+## v11 check (5 October)
+
+GPU run of the exact v11 files on the five gate tasks and five feature tasks,
+patches re-scored in the slim sandbox: 7 of 10. On the same ten tasks v9
+also resolved 7. v11 newly solved requests_status_props and lost rich_3043
+(60-turn cap, no patch). No crashes. data/v11.zip, sha256 a6814a0c40a8.
