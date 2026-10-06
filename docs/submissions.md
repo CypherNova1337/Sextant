@@ -150,3 +150,21 @@ GPU run of the exact v11 files on the five gate tasks and five feature tasks,
 patches re-scored in the slim sandbox: 7 of 10. On the same ten tasks v9
 also resolved 7. v11 newly solved requests_status_props and lost rich_3043
 (60-turn cap, no patch). No crashes. data/v11.zip, sha256 a6814a0c40a8.
+
+## v6 vs v11 on 37 tasks (6 October)
+
+All 27 dev tasks with confirmed reference fixes plus the 10 feature tasks,
+one GPU run of both agents, patches re-scored in the slim sandbox:
+
+| Set | v6 (scored 0.08) | v11 |
+|---|---|---|
+| dev, 27 bug fixes | 8 (30%) | 11 (41%) |
+| feature, 10 | 9 | 8 |
+| total | 17 | 19 |
+
+v11 alone: fastapi_14372, fastapi_14458, requests_7315, rich_3006. v6 alone:
+ft_requests_cidict_union, rich_3278. Both crash-free. About a third of all
+runs ended at the 60-turn cap with no patch (v6 11, v11 12), mostly after
+loops of one identical command (up to 34 in a row). On the broader dev set
+both agents resolve far fewer tasks than on the five-task gate, which had
+over-stated them.
