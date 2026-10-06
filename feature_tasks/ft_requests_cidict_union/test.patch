@@ -1,0 +1,47 @@
+diff --git a/tests/test_cidict_union.py b/tests/test_cidict_union.py
+new file mode 100644
+index 00000000..8d0faa40
+--- /dev/null
++++ b/tests/test_cidict_union.py
+@@ -0,0 +1,41 @@
++import pytest
++
++from requests.structures import CaseInsensitiveDict
++
++
++def test_or():
++    a = CaseInsensitiveDict({"Accept": "a", "X-One": "1"})
++    b = CaseInsensitiveDict({"accept": "b"})
++    c = a | b
++    assert isinstance(c, CaseInsensitiveDict)
++    assert c["ACCEPT"] == "b"
++    assert sorted(c.keys()) == ["X-One", "accept"]
++    assert a["accept"] == "a"
++
++
++def test_or_plain_dict():
++    a = CaseInsensitiveDict({"Accept": "a"})
++    c = a | {"ACCEPT": "z", "New": "n"}
++    assert c["accept"] == "z" and c["new"] == "n"
++
++
++def test_ror():
++    c = {"accept": "x", "Keep": "k"} | CaseInsensitiveDict({"Accept": "y"})
++    assert isinstance(c, CaseInsensitiveDict)
++    assert c["ACCEPT"] == "y" and c["keep"] == "k"
++
++
++def test_ior():
++    a = CaseInsensitiveDict({"Accept": "a"})
++    original = a
++    a |= {"accept": "b"}
++    assert a is original
++    assert a["Accept"] == "b"
++
++
++def test_not_mapping():
++    a = CaseInsensitiveDict({"Accept": "a"})
++    with pytest.raises(TypeError):
++        a | [("x", 1)]
++    with pytest.raises(TypeError):
++        a |= 5

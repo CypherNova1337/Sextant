@@ -1,0 +1,21 @@
+diff --git a/src/requests/models.py b/src/requests/models.py
+index 2d043f59..5c6515f4 100644
+--- a/src/requests/models.py
++++ b/src/requests/models.py
+@@ -768,6 +768,16 @@ class Response:
+             return False
+         return True
+ 
++    @property
++    def is_client_error(self):
++        """True if :attr:`status_code` is a client error (4xx)."""
++        return self.status_code is not None and 400 <= self.status_code < 500
++
++    @property
++    def is_server_error(self):
++        """True if :attr:`status_code` is a server error (5xx)."""
++        return self.status_code is not None and 500 <= self.status_code < 600
++
+     @property
+     def is_redirect(self):
+         """True if this Response is a well-formed HTTP redirect that could have

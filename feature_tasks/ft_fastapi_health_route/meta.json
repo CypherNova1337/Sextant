@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_fastapi_health_route",
+ "repo": "fastapi/fastapi",
+ "snapshot": "fastapi_14786",
+ "problem_statement": "Built-in health-check route\n\nMost of our services define the same `/health` endpoint by hand. Please add a module `fastapi/health.py` with\n\n    add_health_route(app, path=\"/health\", *, status=\"ok\", include_in_schema=False)\n\n- `app` is a `FastAPI` application or an `APIRouter`.\n- It registers a GET route at `path` that responds with status 200 and the JSON body `{\"status\": status}`.\n- The route is left out of the OpenAPI schema unless `include_in_schema=True`.\n- It returns nothing.\n\nIt should be importable as `from fastapi.health import add_health_route`.\n",
+ "hints_text": ""
+}

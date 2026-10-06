@@ -1,0 +1,21 @@
+diff --git a/rich/text_metrics.py b/rich/text_metrics.py
+new file mode 100644
+index 00000000..c5882f95
+--- /dev/null
++++ b/rich/text_metrics.py
+@@ -0,0 +1,15 @@
++"""Measure the cell widths of multi-line strings."""
++
++from typing import List
++
++from .cells import cell_len
++
++
++def line_widths(text: str) -> List[int]:
++    """Return the cell width of each line in text."""
++    return [cell_len(line) for line in text.splitlines()]
++
++
++def widest_line(text: str) -> int:
++    """Return the cell width of the widest line in text, or 0 if there are none."""
++    return max(line_widths(text), default=0)

@@ -1,0 +1,25 @@
+diff --git a/fastapi/health.py b/fastapi/health.py
+new file mode 100644
+index 00000000..44f06ee1
+--- /dev/null
++++ b/fastapi/health.py
+@@ -0,0 +1,19 @@
++from typing import Any, Dict, Union
++
++from fastapi.applications import FastAPI
++from fastapi.routing import APIRouter
++
++
++def add_health_route(
++    app: Union[FastAPI, APIRouter],
++    path: str = "/health",
++    *,
++    status: str = "ok",
++    include_in_schema: bool = False,
++) -> None:
++    """Register a GET route at `path` that answers `{"status": status}`."""
++
++    def health() -> Dict[str, Any]:
++        return {"status": status}
++
++    app.add_api_route(path, health, methods=["GET"], include_in_schema=include_in_schema)

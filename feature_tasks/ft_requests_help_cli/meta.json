@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_requests_help_cli",
+ "repo": "psf/requests",
+ "snapshot": "requests_7315",
+ "problem_statement": "Options for python -m requests.help\n\n`python -m requests.help` prints indented JSON for bug reports. We need two options:\n\n- `--compact`: print the JSON on one line, with separators `(\",\", \":\")` and keys still sorted.\n- `--key NAME`: print only the value of the top-level key NAME, as JSON (compact if `--compact` is also given). If NAME is not a top-level key, print `unknown key: NAME` to standard error and exit with status 1.\n\n`main` should take an optional argument list, `main(argv=None)`, and return the exit status (0 on success); running the module exits with that status. Without options the output stays as it is now.\n",
+ "hints_text": ""
+}

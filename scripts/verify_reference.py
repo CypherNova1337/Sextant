@@ -1,0 +1,202 @@
+"""Score patches on public tasks with the official verifier, without a model.
+
+Runs the competition's own verification phase in the Docker sandbox (image
+swebench-sandbox:latest, built from docker/Dockerfile.local).
+
+Two modes:
+  reference (default): for each task id, verify with no patch (the tests are
+      expected to fail) and with the reference patch (expected to pass). A task
+      that behaves otherwise has a local-environment problem, and agent results
+      on it cannot be trusted.
+  --patches RUN_SUMMARY: verify the agent patches recorded by an evaluation
+      notebook (run_summary.json), since that notebook's own verdicts come from
+      a sandbox that sees the host's installed packages.
+
+Local environment corrections, so that a public task behaves as a private
+hidden-set repository would:
+  - the repository's own package is removed from the wheel set, so its tests
+    import the repository's code rather than a released wheel;
+  - each dependency is limited to the versions the snapshot's pyproject.toml
+    allows, since the harness otherwise installs the newest wheel of each;
+  - wheels in data/wheels_extra/<package>/ are added for that repository only
+    (for fastapi: typing_inspection, python-multipart and inline_snapshot with its dependencies,
+    which its tests need and the public wheel set lacks).
+
+Usage:
+  python scripts/verify_reference.py [--data DIR] [--out FILE] TASK_ID [...]
+  python scripts/verify_reference.py --patches run_summary.json [--out FILE]
+Writes one JSON line per task to --out.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+import time
+import tomllib
+from pathlib import Path
+
+from adk_eval_core.tracing.trace import SessionTrace
+from adk_submission import ModelRegistry
+from packaging.requirements import InvalidRequirement, Requirement
+from packaging.utils import canonicalize_name
+from swegemma.config import EvalConfig
+from swegemma.evaluate import Evaluator
+from swegemma.models import load_tasks
+
+ROOT = Path(__file__).resolve().parent.parent
+OWN_DISTRIBUTION = {
+    "fastapi/fastapi": "fastapi",
+    "Textualize/rich": "rich",
+    "psf/requests": "requests",
+    "encode/httpx": "httpx",
+}
+
+
+def with_newline(patch: str) -> str:
+    # Patches in tasks.jsonl lack their final newline.
+    return patch if patch.endswith("\n") else patch + "\n"
+
+
+def snapshot_requirements(data: Path, task_id: str) -> list[Requirement]:
+    """The [project] dependencies declared in the task snapshot's pyproject.toml."""
+    out = subprocess.run(["tar", "-xzOf", str(data / "snapshots" / f"{task_id}.tgz"), "./pyproject.toml"],
+                         capture_output=True)
+    if out.returncode != 0:
+        return []
+    deps = tomllib.loads(out.stdout.decode(errors="replace")).get("project", {}).get("dependencies", [])
+    reqs = []
+    for dep in deps:
+        try:
+            reqs.append(Requirement(dep))
+        except InvalidRequirement:
+            pass
+    return reqs
+
+
+def wheels_for(data: Path, repo: str, task_id: str) -> Path:
+    """The task's wheel set: without the repository's own package, and with each
+    dependency limited to the versions the snapshot's pyproject.toml allows (the
+    harness otherwise installs the newest wheel of every package)."""
+    own = OWN_DISTRIBUTION.get(repo, repo.rsplit("/", 1)[-1]).lower()
+    limits = {canonicalize_name(r.name): r.specifier for r in snapshot_requirements(data, task_id)}
+    chosen = []
+    sources = list((data / "wheels").glob("*.whl")) + list((data / "wheels_extra" / own).glob("*.whl"))
+    for wheel in sorted(sources):
+        name, version = wheel.name.split("-")[:2]
+        name = canonicalize_name(name)
+        if name == own:
+            continue
+        spec = limits.get(name)
+        if spec is not None and not spec.contains(version, prereleases=True):
+            continue
+        chosen.append(wheel)
+    key = hashlib.sha256("\n".join(w.name for w in chosen).encode()).hexdigest()[:16]
+    target = data / "wheels_by_set" / key
+    if not target.exists():
+        staging = target.with_suffix(".tmp")
+        shutil.rmtree(staging, ignore_errors=True)
+        staging.mkdir(parents=True)
+        for wheel in chosen:
+            os.link(wheel, staging / wheel.name)
+        staging.rename(target)
+    return target
+
+
+def make_evaluator(data: Path, results: Path, repo: str, task_id: str, patch: str | None) -> Evaluator:
+    wheels = wheels_for(data, repo, task_id)
+    # The harness caches unpacked wheels under the temp dir by a fixed name,
+    # so each wheel set needs its own temp dir.
+    cache = data / "wheel_cache" / wheels.name
+    cache.mkdir(parents=True, exist_ok=True)
+    tempfile.tempdir = str(cache)
+    config = EvalConfig(
+        tasks_path=data / "tasks.jsonl",
+        snapshots_dir=data / "snapshots",
+        results_dir=results,
+        submission_dir=ROOT / "agent",
+        models=ModelRegistry(),
+        sandbox="docker",
+        wheels_dir=wheels,
+        skip_agent_patch=patch is None,
+        verbose=False,
+    )
+    evaluator = Evaluator(config)
+    if patch is not None:
+        async def fixed_patch(*args, **kwargs):
+            return patch, None, SessionTrace()
+        evaluator._run_agent_sandbox = fixed_patch
+    return evaluator
+
+
+def run_once(data: Path, results: Path, task, patch: str | None) -> dict:
+    evaluator = make_evaluator(data, results, task.repo, task.instance_id, patch)
+    start = time.time()
+    result = asyncio.run(evaluator.evaluate_task(task=task, task_index=1, total_tasks=1))
+    return {
+        "resolved": bool(result.resolved),
+        "exit_code": result.test_exit_code,
+        "error": result.error,
+        "seconds": round(time.time() - start, 1),
+        "tail": (result.test_output or "")[-600:],
+    }
+
+
+def append(out: Path, row: dict) -> None:
+    with out.open("a") as f:
+        f.write(json.dumps(row) + "\n")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data", type=Path, default=ROOT / "data")
+    parser.add_argument("--out", type=Path)
+    parser.add_argument("--patches", type=Path, help="run_summary.json from an evaluation notebook")
+    parser.add_argument("task_ids", nargs="*")
+    args = parser.parse_args()
+
+    tasks = {t.instance_id: t for t in load_tasks(args.data / "tasks.jsonl")}
+    default = "agent/verify.jsonl" if args.patches else "reference/verify.jsonl"
+    out = args.out or ROOT / "runs" / default
+    out.parent.mkdir(parents=True, exist_ok=True)
+
+    if args.patches:
+        rows = json.loads(args.patches.read_text())["rows"]
+        for r in rows:
+            task, patch = tasks[r["id"]], r.get("patch") or ""
+            agent = r.get("agent", "")
+            if not patch.strip():
+                result = {"resolved": False, "error": "empty patch"}
+            else:
+                result = run_once(args.data, out.parent / agent / r["id"], task, patch)
+            append(out, {"agent": agent, "id": r["id"], **result})
+            print(f"{agent} {r['id']}: resolved={result['resolved']} {result.get('error') or ''}")
+        return
+
+    for tid in args.task_ids:
+        task = tasks[tid]
+        results = out.parent / tid
+        base = run_once(args.data, results / "base", task, None)
+        gold = run_once(args.data, results / "gold", task, with_newline(task.patch))
+        row = {
+            "id": tid,
+            "fails_without_fix": not base["resolved"],
+            "passes_with_fix": gold["resolved"],
+            "ok": (not base["resolved"]) and gold["resolved"],
+            "base": base,
+            "gold": gold,
+        }
+        append(out, row)
+        print(f"{tid}: ok={row['ok']} fails_without_fix={row['fails_without_fix']} "
+              f"passes_with_fix={row['passes_with_fix']} "
+              f"({base['seconds']}s + {gold['seconds']}s) {gold['error'] or ''}")
+
+
+if __name__ == "__main__":
+    main()

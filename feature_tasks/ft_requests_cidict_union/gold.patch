@@ -1,0 +1,31 @@
+diff --git a/src/requests/structures.py b/src/requests/structures.py
+index 188e13e4..18fb79cf 100644
+--- a/src/requests/structures.py
++++ b/src/requests/structures.py
+@@ -76,6 +76,26 @@ class CaseInsensitiveDict(MutableMapping):
+     def copy(self):
+         return CaseInsensitiveDict(self._store.values())
+ 
++    def __or__(self, other):
++        if not isinstance(other, Mapping):
++            return NotImplemented
++        new = self.copy()
++        new.update(other)
++        return new
++
++    def __ror__(self, other):
++        if not isinstance(other, Mapping):
++            return NotImplemented
++        new = CaseInsensitiveDict(other)
++        new.update(self)
++        return new
++
++    def __ior__(self, other):
++        if not isinstance(other, Mapping):
++            return NotImplemented
++        self.update(other)
++        return self
++
+     def __repr__(self):
+         return str(dict(self.items()))
+ 

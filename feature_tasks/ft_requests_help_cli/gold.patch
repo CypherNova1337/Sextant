@@ -1,0 +1,40 @@
+diff --git a/src/requests/help.py b/src/requests/help.py
+index 5d510789..5c564d4b 100644
+--- a/src/requests/help.py
++++ b/src/requests/help.py
+@@ -1,5 +1,6 @@
+ """Module containing bug report helper(s)."""
+ 
++import argparse
+ import json
+ import platform
+ import ssl
+@@ -122,10 +123,25 @@ def info():
+     }
+ 
+ 
+-def main():
++def main(argv=None):
+     """Pretty-print the bug information as JSON."""
+-    print(json.dumps(info(), sort_keys=True, indent=2))
++    parser = argparse.ArgumentParser(prog="python -m requests.help")
++    parser.add_argument("--compact", action="store_true", help="print on one line")
++    parser.add_argument("--key", help="print only this top-level key")
++    args = parser.parse_args(argv)
++
++    data = info()
++    if args.key is not None:
++        if args.key not in data:
++            sys.stderr.write(f"unknown key: {args.key}\n")
++            return 1
++        data = data[args.key]
++    if args.compact:
++        print(json.dumps(data, sort_keys=True, separators=(",", ":")))
++    else:
++        print(json.dumps(data, sort_keys=True, indent=2))
++    return 0
+ 
+ 
+ if __name__ == "__main__":
+-    main()
++    sys.exit(main())

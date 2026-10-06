@@ -1,0 +1,23 @@
+diff --git a/tests/test_text_metrics.py b/tests/test_text_metrics.py
+new file mode 100644
+index 00000000..6c74ccdd
+--- /dev/null
++++ b/tests/test_text_metrics.py
+@@ -0,0 +1,17 @@
++from rich.text_metrics import line_widths, widest_line
++
++
++def test_line_widths():
++    assert line_widths("ab\nabcd\n") == [2, 4]
++    assert line_widths("") == []
++    assert line_widths("x\r\nyy") == [1, 2]
++
++
++def test_wide_characters():
++    assert line_widths("\u4f60\u597d") == [4]
++    assert widest_line("abc\n\u4f60\u597d") == 4
++
++
++def test_widest_line():
++    assert widest_line("") == 0
++    assert widest_line("a\nabc\nab") == 3

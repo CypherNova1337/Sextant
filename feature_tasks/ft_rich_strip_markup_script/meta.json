@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_rich_strip_markup_script",
+ "repo": "Textualize/rich",
+ "snapshot": "rich_4077",
+ "problem_statement": "Add a script to strip console markup from files\n\nWe keep text files with Rich console markup and need a plain version. Please add a script at `tools/strip_markup.py`.\n\nUsage:\n\n    python tools/strip_markup.py PATH\n\n- Prints the content of the file at PATH with the console markup removed, exactly as `rich.markup.render(content).plain` gives it. Nothing else is printed and no extra newline is added.\n- If PATH is `-`, it reads standard input instead.\n- If the file does not exist, it prints `error: no such file: PATH` to standard error and exits with status 2.\n- The script must also be importable, exposing `strip_markup(text: str) -> str` and `main(argv=None) -> int`, which returns the exit status.\n",
+ "hints_text": ""
+}

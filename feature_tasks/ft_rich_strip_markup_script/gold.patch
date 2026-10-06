@@ -1,0 +1,40 @@
+diff --git a/tools/strip_markup.py b/tools/strip_markup.py
+new file mode 100644
+index 00000000..cc39f56a
+--- /dev/null
++++ b/tools/strip_markup.py
+@@ -0,0 +1,34 @@
++"""Print a file with Rich console markup removed."""
++
++import sys
++from pathlib import Path
++from typing import List, Optional
++
++from rich.markup import render
++
++
++def strip_markup(text: str) -> str:
++    """Return text without console markup."""
++    return render(text).plain
++
++
++def main(argv: Optional[List[str]] = None) -> int:
++    args = sys.argv[1:] if argv is None else argv
++    if len(args) != 1:
++        sys.stderr.write("usage: strip_markup.py PATH\n")
++        return 2
++    path = args[0]
++    if path == "-":
++        content = sys.stdin.read()
++    else:
++        file = Path(path)
++        if not file.is_file():
++            sys.stderr.write(f"error: no such file: {path}\n")
++            return 2
++        content = file.read_text(encoding="utf-8")
++    sys.stdout.write(strip_markup(content))
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main())

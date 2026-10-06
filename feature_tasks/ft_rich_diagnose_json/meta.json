@@ -1,0 +1,7 @@
+{
+ "instance_id": "ft_rich_diagnose_json",
+ "repo": "Textualize/rich",
+ "snapshot": "rich_4077",
+ "problem_statement": "Machine-readable output for python -m rich.diagnose\n\n`python -m rich.diagnose` prints a report for humans. For bug reports we want something we can parse.\n\n1. Add `collect() -> dict` to `rich/diagnose.py`. It returns `{\"platform\": platform.system(), \"env\": {...}}`, where `env` maps each environment variable name the report already lists to its value, or `None` when it is not set.\n2. Add a `--json` option: `python -m rich.diagnose --json` prints `collect()` as JSON with sorted keys and nothing else, then exits with status 0. Without the option the existing report is printed as before.\n",
+ "hints_text": ""
+}
