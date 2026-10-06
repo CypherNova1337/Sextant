@@ -168,3 +168,23 @@ runs ended at the 60-turn cap with no patch (v6 11, v11 12), mostly after
 loops of one identical command (up to 34 in a row). On the broader dev set
 both agents resolve far fewer tasks than on the five-task gate, which had
 over-stated them.
+
+## v12: reasoning on (6 October)
+
+v11 with `include_thoughts: true`, `thinking_budget: 1024` and a 4.0-minute
+cap. Same 37 tasks, patches re-scored in the slim sandbox:
+
+| Set | v11 | v12 |
+|---|---|---|
+| dev, 27 | 11 | 10 |
+| feature, 10 | 8 | 9 |
+| total | 19 | 19 |
+
+v12 alone: ft_requests_cidict_union, rich_3043. v11 alone: fastapi_14301,
+requests_7315 (v12 edited tests/test_adapters.py, so the hidden test patch
+failed to apply). The behaviour changed far more than the score: 19.6 tool
+calls per task against about 37, no run at the 60-turn cap (v11: 12), but 18
+of 37 runs reached the 4-minute cap. Mean agent time 209 s; with about 90 s of
+scorer overhead per task (from submission 3's 8 to 9 hours), 120 tasks take
+about 10 hours, inside the 12-hour limit.
+data/v12.zip, sha256 bcdb4933a9a3.
