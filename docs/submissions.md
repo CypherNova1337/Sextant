@@ -11,8 +11,8 @@ sandbox with `scripts/verify_reference.py`.
 | 3 | 2026-10-02 | v5: v4-rules agent, configs matched to a scored submission (all four eval_config keys, 4.5 min, thinking_budget present, no root description) | `ed4706a5` | validator, compiler and structure check; GPU run of these exact files on 4 dev tasks: no exceptions, all within the cap, 3 of 4 resolved (requests_6644, rich_3006, rich_3454; fastapi_14430 empty patch) | Public score 0.08 (about 5 of about 60 tasks) |
 | 4 | 2026-10-03 | v6: v5 plus the sx_find ranker, reproduce at most once, no git stash/checkout/reset | `f42e1b5c` | validator, compiler and structure check; GPU run of these exact files on 5 random dev tasks: 4 of 5 resolved, no exceptions | Public score 0.08 |
 | 5 | 2026-10-04 00:00 | v9: investigator sub-agent, edit/search helpers shipped as a skill, 4.5 min | `04b4d0b6` | validator, compiler and structure check; GPU run of these exact files on the same 5 tasks: 4 of 5 resolved, no exceptions | Public score 0.08 |
-| 6 | 2026-10-05 21:27 | v11: v10 method (features, hints, python3 -c checks), plain helper install, no skill, 4.5 min | `a6814a0c` | validator, compiler and structure check; GPU run of these exact files on 5 gate + 5 feature tasks: 7 of 10 (v9 also 7 of 10), no exceptions | Error, no score (cause not reported) |
-| 7 | 2026-10-06 22:27 | v12: v11 + reasoning on (include_thoughts true, budget 1024), 4.0 min per task | `bcdb4933` | validator, compiler and structure check; GPU run of these exact files on 27 dev + 10 feature tasks: 19 of 37 (v11 also 19), no turn-cap runs, mean 209 s per task | pending |
+| 6 | 2026-10-05 21:27 | v11: v10 method (features, hints, python3 -c checks), plain helper install, no skill, 4.5 min | `a6814a0c` | validator, compiler and structure check; GPU run of these exact files on 5 gate + 5 feature tasks: 7 of 10 (v9 also 7 of 10), no exceptions | Error: "A system error", no score (Kaggle ref 56862128) |
+| 7 | 2026-10-06 22:27 | v12: v11 + reasoning on (include_thoughts true, budget 1024), 4.0 min per task | `bcdb4933` | validator, compiler and structure check; GPU run of these exact files on 27 dev + 10 feature tasks: 19 of 37 (v11 also 19), no turn-cap runs, mean 209 s per task | Error: "A system error", no score (Kaggle ref 56892091) |
 
 ## Notes on the two failures
 
@@ -189,3 +189,17 @@ of 37 runs reached the 4-minute cap. Mean agent time 209 s; with about 90 s of
 scorer overhead per task (from submission 3's 8 to 9 hours), 120 tasks take
 about 10 hours, inside the 12-hour limit.
 data/v12.zip, sha256 bcdb4933a9a3.
+
+## Submissions 6 and 7: "A system error" (7 October)
+
+Kaggle's API reports the same error for both, "A system error. Please try
+resubmitting to resolve the error and contact Kaggle Support if it persists.",
+and no output size, while v9 recorded one. That is the platform's generic
+infrastructure message, not "Notebook Threw Exception" or a timeout. On 6 and
+7 October many teams posted the same pattern in the forum (threads 746480,
+746658): a run of about 15 hours, then "Kaggle Error", including a plain
+configuration with a 4.5-minute cap (743683). No host reply yet.
+
+Ruled out on our side: the vLLM gemma4 tool-parser hang (746336) needs a
+malformed array argument, and the only array-taking tool we declare,
+get_code_subgraph, was called 0 times in 5,548 recorded tool calls.
