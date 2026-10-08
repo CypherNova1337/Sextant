@@ -223,3 +223,29 @@ Nine fastapi tasks were never resolved by any version. edit_file lost an
 argument 4 times for the reference and 21 times for v13, concentrated in a few
 tasks where the model resent the same malformed call; one python command hung
 for the full 240 s.
+
+## Will it finish inside 12 hours? (8 October)
+
+Estimated from v13's A/B traces, weighting the hidden set like the tasks the
+agent failed (85%), which run longest, plus 15 minutes of start-up:
+
+| Scorer overhead per task | v13 (8 min, 28 calls) on 120 tasks |
+|---|---|
+| 30 s | 10.8 h |
+| 60 s | 11.8 h |
+| 90 s | 12.8 h |
+
+Lowering the time cap barely helps (unsolved runs mostly stop at the 28-call
+limit, about 5 minutes in), and lowering the call cap costs fixes: at 24 calls
+13 of v13's 16 fixes are in place, at 22 only 12. The avoidable cost is in the
+tails: one agent check ran the full 240 s command limit (an infinite loop in
+the code under test), and single thinking turns reached 2 minutes. v14's
+`timeout 60` rule removed every command over 60 s in its run.
+
+v14 (thinking 2048, temperature 0.4, ranked search, timeout rule) thought more
+per call on average (300 tokens against 254) and was slower overall (mean
+272 s against 257 s).
+
+v13b = v13 plus the timeout rule and "the sandbox is offline: never run
+anything that waits for a network connection or input"; nothing else changed.
+data/upload_v13b/submission.zip, sha256 b2c51def1538.
