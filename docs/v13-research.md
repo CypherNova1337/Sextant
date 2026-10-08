@@ -56,3 +56,36 @@ experiments/v13 is the Budget-Fit bundle with one added prompt section built
 from our traces: no git stash/checkout/reset/clean/commit; no edits to
 packaging or test config; exact names and registration for new features;
 several identifiers per git grep; a fallback when edit_file fails.
+
+## Controlled ablations on all 129 public tasks (forum thread 746250)
+
+One team ran single-change experiments on all 129 public tasks (faster GPUs
+than Kaggle's; 50 tool calls, 80 turns unless stated):
+
+| Change | Resolved / 129 |
+|---|---|
+| reference: temperature 0.2, thinking 4096, thoughts included | 48 |
+| temperature 0.0 / 0.4 / 1.0 | 47 / 51 / 51 |
+| thinking budget 2048 / 6144 | 50 / 48 |
+| thinking disabled | 23 |
+| thought summaries disabled | 35 |
+| active time cap 6 / 10 / 15 / 20 / 60 min | 37 / 46 / 54 / 49 / 51 |
+| 25 tool calls instead of 50 (15-min cap) | 36 instead of 50 |
+| graph tools added | 50 instead of 55 |
+| analyzer sub-agent added | 51 instead of 50 |
+| the same configuration run again | 48 instead of 55 |
+
+Reasoning off roughly halves the resolved count: every Sextant submission that
+scored (v5, v6, v9) ran with reasoning off. A 2048-token budget matches 4096
+while making each call cheaper. Time per task is the main lever, and the
+12-hour total is what limits it. Repeat runs differ by about 7 tasks in 129,
+so small differences need large samples. Their Kaggle 4xL4 calibration: 8.68 s
+per model call with thinking on; about 5.5 minutes per task fits 120 tasks in
+12 hours.
+
+## v14 (staged, not yet run)
+
+v13 plus: thinking_budget 2048, temperature 0.4, a ranked-search command
+(files ordered by how many task identifiers they mention), and `timeout 60`
+in front of the agent's own test and script runs, which keeps them short
+without lowering timeout_seconds (that value also limits the hidden-test run).
