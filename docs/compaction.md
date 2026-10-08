@@ -75,7 +75,13 @@ both.
 1. **Task kept after compaction:** the prompt ends with `## The Task`
    `{problem_description?}` and `## Hints (may be empty)` `{hints?}`. Costs the
    problem statement's length once more per call (median 418 characters,
-   90th percentile 1,891 in the dev set).
+   90th percentile 1,891, largest 10,095 in the dev set; no dev task has
+   hints). The cost grows with the statement: after a compaction the
+   instruction still carries it, so a very long statement leaves little room
+   below the threshold and compactions come more often. At the dev set's
+   largest (about 2,500 tokens) the room after a compaction drops from about
+   7,300 to 4,800 tokens; a statement of 6,000 tokens or more would bring a
+   compaction every few calls, bounded by the 8-minute cap.
 2. **Call counting:** the agent starts its reasoning for each step with the
    call number (`Call 7`), and the edit-by-12 and no-exploration-from-20 rules
    refer to those numbers. Reasoning stays in the context, and the last 5
