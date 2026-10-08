@@ -27,6 +27,10 @@ thinking off, 10 tasks): 4 against 3 resolved, about half the tool calls
 - The 12 hours cover all ~120 hidden tasks, public and private halves together.
 - The hidden set comes from private repositories, not the four public ones
   (744951).
+- 8 October (747519, hosts): "A system error" meant the submission had waited
+  more than 15 hours in the L4 queue. The queue allowance is now longer, affected
+  runs that finished are being re-scored automatically, and a team cannot submit
+  while its previous submission is still scoring.
 - Infrastructure failures (GPU outages, "system error", queue problems) have
   ended many submissions with no score; the hosts reran some (743683, 744807).
 - Loops of identical commands are widespread (745774: one command 69 times);

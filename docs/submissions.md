@@ -12,7 +12,7 @@ sandbox with `scripts/verify_reference.py`.
 | 4 | 2026-10-03 | v6: v5 plus the sx_find ranker, reproduce at most once, no git stash/checkout/reset | `f42e1b5c` | validator, compiler and structure check; GPU run of these exact files on 5 random dev tasks: 4 of 5 resolved, no exceptions | Public score 0.08 |
 | 5 | 2026-10-04 00:00 | v9: investigator sub-agent, edit/search helpers shipped as a skill, 4.5 min | `04b4d0b6` | validator, compiler and structure check; GPU run of these exact files on the same 5 tasks: 4 of 5 resolved, no exceptions | Public score 0.08 |
 | 6 | 2026-10-05 21:27 | v11: v10 method (features, hints, python3 -c checks), plain helper install, no skill, 4.5 min | `a6814a0c` | validator, compiler and structure check; GPU run of these exact files on 5 gate + 5 feature tasks: 7 of 10 (v9 also 7 of 10), no exceptions | Error: "A system error", no score (Kaggle ref 56862128) |
-| 7 | 2026-10-06 22:27 | v12: v11 + reasoning on (include_thoughts true, budget 1024), 4.0 min per task | `bcdb4933` | validator, compiler and structure check; GPU run of these exact files on 27 dev + 10 feature tasks: 19 of 37 (v11 also 19), no turn-cap runs, mean 209 s per task | Error: "A system error", no score (Kaggle ref 56892091) |
+| 7 | 2026-10-06 22:27 | v12: v11 + reasoning on (include_thoughts true, budget 1024), 4.0 min per task | `bcdb4933` | validator, compiler and structure check; GPU run of these exact files on 27 dev + 10 feature tasks: 19 of 37 (v11 also 19), no turn-cap runs, mean 209 s per task | **0.12** (7 of 58), scored on 8 October by the hosts' recovery of queue-timed-out runs; first listed as "A system error" (Kaggle ref 56892091) |
 | 8 | 2026-10-07 18:53 | v12 resubmission (same bytes as 7) | `bcdb4933` | as 7 | Error: "A system error", no score (Kaggle ref 56919417) |
 | 9 | 2026-10-08 12:55 | v13b: Budget-Fit core (reasoning 4096, temp 0.2, 8 min / 28 calls / 240 s) plus our rules and a 60 s cap on the agent's own commands | `b2c51def` | validator, compiler and structure check; v13 resolved 16 of 27 in the A/B (reference 15); v13b adds one prompt line, the timeout rule exercised in the v14 run | pending (Kaggle ref 56954737) |
 
@@ -253,6 +253,28 @@ are not carried forward.
 v13b = v13 plus the timeout rule and "the sandbox is offline: never run
 anything that waits for a network connection or input"; nothing else changed.
 data/upload_v13b/submission.zip, sha256 b2c51def1538.
+
+## The "system error" submissions (8 October)
+
+The hosts explained the "Kaggle Error / A system error" results (forum 747519,
+8 October 22:09 UTC): with so many L4 submissions queued, any submission that
+waited more than 15 hours for a machine was marked as an error, even when it
+later ran. They have lengthened the queue allowance and are re-scoring every
+affected run that finished with a valid submission file; nothing needs to be
+resubmitted. v12 (ref 56892091) came back with 0.12, our best score so far
+and our first scored run with reasoning on. v11 and the v12 resubmission still
+show the error.
+
+New rule from the same post: a team cannot submit again while its previous
+submission is still scoring (separate from the one-per-day limit).
+
+Leaderboard on 8 October 22:24 UTC: 2,114 teams. CypherNova1337 at 0.12 is
+shown at rank 823; 480 teams are above 0.12 and 386 share it. Top scores:
+0.24 (2 teams), 0.22 (1), 0.20 (3), 0.18 (14, including the Budget-Fit author),
+0.17 (58), 0.15 (129), 0.13 (273), 0.12 (386).
+
+v12 resolved 10 of 27 dev tasks locally against 16 for v13 and 15 for the
+Budget-Fit reference, so the local ranking and the leaderboard agree so far.
 
 ## v17 (staged 8 October, not yet run)
 
