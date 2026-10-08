@@ -6,6 +6,11 @@ source edit landed, how many edits failed, whether the agent edited a file
 the reference patch changes (localization), and whether it touched test or
 config files.
 
+It also counts history compactions. The scorer replaces older history with a
+summary once a prompt reaches 14,336 tokens; a compaction shows in the trace
+as the prompt shrinking by more than 1,500 tokens between two model calls.
+Reads of a file already read before a compaction are counted as re-reads.
+
 Usage:
   python scripts/analyze_run.py RUN_DIR VERIFY_JSONL [VERIFY_JSONL ...] [--data DIR]
 RUN_DIR holds run_summary.json and results/<agent>/traces/trace_<task>.json
@@ -25,6 +30,7 @@ ROOT = Path(__file__).resolve().parent.parent
 EDIT_TOOLS = {"edit_file", "write_file"}
 SHELL_WRITE = re.compile(r"(cat\s+>{1,2}\s*(?!/tmp)[\w.-][\w./-]*\.py|sed\s+-i)")
 INSTALL = "SEXTANT_HELPER"
+COMPACTION_DROP = 1500
 
 
 def changed_files(patch: str) -> set[str]:
@@ -44,11 +50,21 @@ def is_test_or_config(path: str) -> bool:
 
 def trace_facts(trace_path: Path) -> dict:
     facts = {"calls": 0, "first_edit_call": None, "edit_failures": 0, "budget_errors": 0,
-             "submitted": False, "errors": 0, "tools": collections.Counter()}
+             "submitted": False, "errors": 0, "tools": collections.Counter(),
+             "compactions": 0, "first_compaction_call": None, "rereads": 0}
     if not trace_path.exists():
         return facts
     steps = json.loads(trace_path.read_text()).get("steps", [])
+    last_prompt = None
+    read_before = set()
     for step in steps:
+        prompt = (step.get("metrics") or {}).get("prompt_tokens")
+        if prompt:
+            if last_prompt and prompt < last_prompt - COMPACTION_DROP:
+                facts["compactions"] += 1
+                if facts["first_compaction_call"] is None:
+                    facts["first_compaction_call"] = facts["calls"]
+            last_prompt = prompt
         obs = str((step.get("observation") or {}).get("content"))
         failed = '"status": "error"' in obs or "mandatory input parameters" in obs
         for call in step.get("tool_calls") or []:
@@ -62,6 +78,11 @@ def trace_facts(trace_path: Path) -> dict:
                 facts["errors"] += 1
                 if "BudgetExceeded" in obs:
                     facts["budget_errors"] += 1
+            if name == "read_file":
+                path = (call.get("arguments") or {}).get("filepath")
+                if facts["compactions"] and path in read_before:
+                    facts["rereads"] += 1
+                read_before.add(path)
             args = json.dumps(call.get("arguments") or {})
             is_edit = name in EDIT_TOOLS or (
                 name == "run_command" and INSTALL not in args
@@ -123,6 +144,9 @@ def main() -> None:
             "found_file": bool(edited & gold.get(tid, set())) if gold.get(tid) else None,
             "empty": not edited,
             "touched_tests": sorted(f for f in edited if is_test_or_config(f)),
+            "compactions": facts["compactions"],
+            "first_compaction": facts["first_compaction_call"],
+            "rereads": facts["rereads"],
         })
 
     for agent, items in by_agent.items():
@@ -136,6 +160,11 @@ def main() -> None:
         found = [i for i in items if i["found_file"] is not None]
         print(f"  edited a reference file: {sum(i['found_file'] for i in found)}/{len(found)}; "
               f"empty patches: {sum(i['empty'] for i in items)}; edit failures: {sum(i['edit_fail'] for i in items)}")
+        compacted = [i for i in items if i["compactions"]]
+        firsts = sorted(i["first_compaction"] for i in compacted)
+        print(f"  compactions: {sum(i['compactions'] for i in items)} in {len(compacted)} tasks "
+              f"(resolved {sum(1 for i in compacted if i['resolved'])}); median first at call "
+              f"{firsts[len(firsts) // 2] if firsts else None}; re-reads after one: {sum(i['rereads'] for i in items)}")
         late = [i for i in items if i["first_edit"] is None or i["first_edit"] > 12]
         print(f"  no edit by call 12: {len(late)} (resolved {sum(1 for i in late if i['resolved'])})")
         touched = [i for i in items if i["touched_tests"]]

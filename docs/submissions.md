@@ -251,3 +251,13 @@ per call on average (300 tokens against 254) and was slower overall (mean
 v13b = v13 plus the timeout rule and "the sandbox is offline: never run
 anything that waits for a network connection or input"; nothing else changed.
 data/upload_v13b/submission.zip, sha256 b2c51def1538.
+
+## v17 (staged 8 October, not yet run)
+
+The scorer summarizes away older history, including the task message, once a
+prompt reaches 14,336 tokens; this happened in 22 of v13's 27 dev tasks,
+around call 15, at about 25 s per summary. v17 = v13b plus the problem
+statement in the instruction through `{problem_description?}` (kept on every
+call), call counting, v16's one-step shell edit after a broken `edit_file`
+call, smaller outputs, and no code-graph tools. Details and measurements in
+docs/compaction.md. data/v17.zip, built and checked on CPU only.
