@@ -1,0 +1,5 @@
+name: sextant
+agent_class: ParallelAgent
+sub_agents:
+  - config_path: sub_agents/coder.yaml
+  - config_path: sub_agents/scout.yaml
