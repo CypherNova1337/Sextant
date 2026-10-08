@@ -70,7 +70,7 @@ both.
 
 ## v17
 
-`experiments/v17` = v13b with these changes:
+`experiments/v17` = v13b with five prompt changes:
 
 1. **Task kept after compaction:** the prompt ends with `## The Task`
    `{problem_description?}` and `## Hints (may be empty)` `{hints?}`. Costs the
@@ -93,17 +93,16 @@ both.
    `| head -30`.
 5. **Summaries explained:** the prompt says older messages get summarized,
    the task stays, and the agent should continue rather than restart.
-6. **No code-graph tools:** the three graph tools are no longer declared
-   (about 1,700 characters of declarations on every call). No run of ours has
-   ever called them (0 of about 7,500 tool calls). One graph tool takes an
-   array argument, and the gemma4 tool parser in the scorer's vLLM can hang
-   on malformed arrays (forum 746336), which would stall every later task.
-   Risk: a call to an undeclared tool raises in ADK and the harness then
-   keeps no patch for that task, so the prompt says the tools are not
-   available here.
 
-Sampling and budgets are unchanged from v13b (temperature 0.2, thinking
-budget 4,096, 240 s command timeout, 28 calls, 8 minutes, 80 turns).
+The three code-graph tools stay declared, as in every configuration we have
+tested. Dropping them would save about 1,700 characters of declarations per
+call, but the task message advertises them whenever graph data exists, and a
+call to an undeclared tool raises in ADK; the harness then keeps no patch for
+that task, not even a submitted one (forum 745028). With the tools declared
+and the "do not use" line, our runs made 0 graph-tool calls in about 7,500.
+
+Sampling and budgets are v13b's: temperature 0.2, thinking budget 4,096,
+240 s command timeout, 28 calls, 8 minutes, 80 turns.
 
 Package: `data/v17.zip`, built with `scripts/build_submission.py`. Not yet run
 on a GPU.

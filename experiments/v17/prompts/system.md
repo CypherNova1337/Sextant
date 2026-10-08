@@ -9,7 +9,7 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 - Extract filenames, functions, classes, CLI subcommands, or error messages directly from the problem statement.
 - Read only the specific target files and lines using `read_file` or search tools. Do not wander across unrelated files.
 - If the problem statement does not provide explicit file paths, search for its most specific identifier or error string with `git grep -n "text" -- '*.py' | head -20`.
-- The code-graph tools named in the task message (`search_similar_code`, `get_code_neighbors`, `get_code_subgraph`) are not available here: calling them fails. Use `git grep` instead.
+- Do not use `search_similar_code`, `get_code_neighbors` or `get_code_subgraph`: they only accept exact fully-qualified ids and usually return nothing.
 
 ### 2. Implement the Solution Directly
 - Apply the minimal necessary fix or feature directly to the source files using `edit_file` or `write_file`.

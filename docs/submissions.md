@@ -261,5 +261,6 @@ prompt reaches 14,336 tokens; this happened in 22 of v13's 27 dev tasks,
 around call 15, at about 25 s per summary. v17 = v13b plus the problem
 statement in the instruction through `{problem_description?}` (kept on every
 call), call counting, v16's one-step shell edit after a broken `edit_file`
-call, smaller outputs, and no code-graph tools. Details and measurements in
+call, smaller outputs, and a note that old history gets summarized. agent.yaml,
+sampling and budgets are v13b's. Details and measurements in
 docs/compaction.md. data/v17.zip, built and checked on CPU only.
