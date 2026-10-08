@@ -203,3 +203,23 @@ configuration with a 4.5-minute cap (743683). No host reply yet.
 Ruled out on our side: the vLLM gemma4 tool-parser hang (746336) needs a
 malformed array argument, and the only array-taking tool we declare,
 get_code_subgraph, was called 0 times in 5,548 recorded tool calls.
+
+## v13 against the Budget-Fit reference (8 October)
+
+One GPU run, same 27 dev tasks, both agents task by task; patches re-scored in
+the slim sandbox:
+
+| Agent | Resolved / 27 |
+|---|---|
+| v6 (earlier run; LB 0.08) | 8 |
+| v11 (earlier run) | 11 |
+| v12 (earlier run) | 10 |
+| budgetfit-ref (public 0.17 to 0.18 design) | 15 |
+| v13 (budgetfit-ref plus our rules) | 16 |
+
+v13 alone: fastapi_13207, fastapi_14430, rich_4077. Reference alone: rich_3063,
+rich_3480. Mean agent time about 255 s and 23 tool calls per task for both.
+Nine fastapi tasks were never resolved by any version. edit_file lost an
+argument 4 times for the reference and 21 times for v13, concentrated in a few
+tasks where the model resent the same malformed call; one python command hung
+for the full 240 s.
