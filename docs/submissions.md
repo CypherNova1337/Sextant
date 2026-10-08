@@ -246,7 +246,9 @@ the code under test), and single thinking turns reached 2 minutes. v14's
 
 v14 (thinking 2048, temperature 0.4, ranked search, timeout rule) thought more
 per call on average (300 tokens against 254) and was slower overall (mean
-272 s against 257 s).
+272 s against 257 s). Re-scored in full, it resolved 12 of the 27 tasks, against
+16 for v13 and 15 for the reference on the same tasks; its sampling changes
+are not carried forward.
 
 v13b = v13 plus the timeout rule and "the sandbox is offline: never run
 anything that waits for a network connection or input"; nothing else changed.
