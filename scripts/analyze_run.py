@@ -31,6 +31,7 @@ EDIT_TOOLS = {"edit_file", "write_file"}
 SHELL_WRITE = re.compile(r"(cat\s+>{1,2}\s*(?!/tmp)[\w.-][\w./-]*\.py|sed\s+-i)")
 INSTALL = "SEXTANT_HELPER"
 COMPACTION_DROP = 1500
+CALL_LABEL = re.compile(r"^\W*call\s+(\d+)", re.I)
 
 
 def changed_files(patch: str) -> set[str]:
@@ -51,13 +52,21 @@ def is_test_or_config(path: str) -> bool:
 def trace_facts(trace_path: Path) -> dict:
     facts = {"calls": 0, "first_edit_call": None, "edit_failures": 0, "budget_errors": 0,
              "submitted": False, "errors": 0, "tools": collections.Counter(),
-             "compactions": 0, "first_compaction_call": None, "rereads": 0}
+             "compactions": 0, "first_compaction_call": None, "rereads": 0,
+             "labelled": 0, "label_exact": 0}
     if not trace_path.exists():
         return facts
     steps = json.loads(trace_path.read_text()).get("steps", [])
     last_prompt = None
     read_before = set()
     for step in steps:
+        if step.get("source") == "agent" and step.get("tool_calls"):
+            label = CALL_LABEL.match(step.get("message") or "")
+            if label:
+                facts["labelled"] += 1
+                counted = [c for c in step["tool_calls"] if c.get("function_name") not in ("submit_patch", "get_status")]
+                if counted and int(label.group(1)) == facts["calls"] + 1:
+                    facts["label_exact"] += 1
         prompt = (step.get("metrics") or {}).get("prompt_tokens")
         if prompt:
             if last_prompt and prompt < last_prompt - COMPACTION_DROP:
@@ -147,6 +156,8 @@ def main() -> None:
             "compactions": facts["compactions"],
             "first_compaction": facts["first_compaction_call"],
             "rereads": facts["rereads"],
+            "labelled": facts["labelled"],
+            "label_exact": facts["label_exact"],
         })
 
     for agent, items in by_agent.items():
@@ -165,6 +176,10 @@ def main() -> None:
         print(f"  compactions: {sum(i['compactions'] for i in items)} in {len(compacted)} tasks "
               f"(resolved {sum(1 for i in compacted if i['resolved'])}); median first at call "
               f"{firsts[len(firsts) // 2] if firsts else None}; re-reads after one: {sum(i['rereads'] for i in items)}")
+        labelled = sum(i["labelled"] for i in items)
+        if labelled:
+            print(f"  steps starting with a call number: {labelled} of {sum(i['calls'] for i in items)} calls; "
+                  f"number equal to the real count: {sum(i['label_exact'] for i in items)}")
         late = [i for i in items if i["first_edit"] is None or i["first_edit"] > 12]
         print(f"  no edit by call 12: {len(late)} (resolved {sum(1 for i in late if i['resolved'])})")
         touched = [i for i in items if i["touched_tests"]]
