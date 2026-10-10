@@ -155,3 +155,36 @@ Next: v17b keeps the structural changes and drops what the model ignored
 (call counting, the output rule), and extends the broken-call rule to every
 tool with a heredoc for new files. It runs against v13b in one notebook on
 the new harness.
+
+## v17b against v13b (10 October, one notebook, 9 October harness)
+
+`cyphernova1337/sextant-v17b`, 27 dev tasks, both agents task by task on one
+model server, patches re-scored with the new verification:
+
+| | v13b | v17b |
+|---|---|---|
+| resolved | **18** | **17** |
+| mean seconds per task | 251 | 277 |
+| edited a reference file | 21 | 23 |
+| empty patches | 3 | 2 |
+| tasks with a compaction | 21 | 22 |
+| median call of the first compaction | 14 | 17 |
+| re-reads after a compaction | 58 | 45 |
+| broken tool calls (identical retries) | 12 (9) | 12 (6) |
+| graph-tool calls | 1 | 0 |
+
+- They differ on three tasks: v17b alone solved fastapi_13920, which no run
+  had solved before; v13b alone solved rich_3278 and rich_3480. That is
+  within the noise.
+- Both beat every run on the old harness (v13 16, reference 15). v13b solved
+  everything v13 did plus fastapi_14459 and rich_3480; fastapi_14459 was
+  solved only by runs on the new harness, so the harness itself seems to
+  help.
+- v17b took 26 s longer per task on average (median difference 13 s), driven
+  by a few long tasks in each direction.
+- v17b's agent created 14 files with the heredoc form and used the shell edit
+  twice; write_file lost its path 3 times (20 in v17).
+
+v13b is the best configuration measured so far. v17b is level with it inside
+the noise, with the task statement kept through compactions and no graph
+tools. data/v17b.zip, sha256 7795f00d30b4daa7d903e832121ad54a540023c6bffdd6c73655ab6ed88d6bfd.
