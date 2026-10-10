@@ -70,7 +70,7 @@ both.
 
 ## v17
 
-`experiments/v17` = v13b with five prompt changes:
+`experiments/v17` = v13b with these changes:
 
 1. **Task kept after compaction:** the prompt ends with `## The Task`
    `{problem_description?}` and `## Hints (may be empty)` `{hints?}`. Costs the
@@ -100,12 +100,11 @@ both.
 5. **Summaries explained:** the prompt says older messages get summarized,
    the task stays, and the agent should continue rather than restart.
 
-The three code-graph tools stay declared, as in every configuration we have
-tested. Dropping them would save about 1,700 characters of declarations per
-call, but the task message advertises them whenever graph data exists, and a
-call to an undeclared tool raises in ADK; the harness then keeps no patch for
-that task, not even a submitted one (forum 745028). With the tools declared
-and the "do not use" line, our runs made 0 graph-tool calls in about 7,500.
+6. **No code-graph tools** (since the 9 October harness, docs/harness-0211.md):
+   a call to an undeclared tool now comes back as an error instead of ending
+   the task, and the task message leaves undeclared tools out, so dropping
+   the three graph tools saves about 2,300 characters per call. Our runs never
+   called them (0 of about 7,500 calls).
 
 Sampling and budgets are v13b's: temperature 0.2, thinking budget 4,096,
 240 s command timeout, 28 calls, 8 minutes, 80 turns.
