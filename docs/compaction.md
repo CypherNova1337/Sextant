@@ -99,7 +99,6 @@ both.
    `| head -30`.
 5. **Summaries explained:** the prompt says older messages get summarized,
    the task stays, and the agent should continue rather than restart.
-
 6. **No code-graph tools** (since the 9 October harness, docs/harness-0211.md):
    a call to an undeclared tool now comes back as an error instead of ending
    the task, and the task message leaves undeclared tools out, so dropping
