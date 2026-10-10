@@ -14,7 +14,7 @@ sandbox with `scripts/verify_reference.py`.
 | 6 | 2026-10-05 21:27 | v11: v10 method (features, hints, python3 -c checks), plain helper install, no skill, 4.5 min | `a6814a0c` | validator, compiler and structure check; GPU run of these exact files on 5 gate + 5 feature tasks: 7 of 10 (v9 also 7 of 10), no exceptions | Error: "A system error", no score (Kaggle ref 56862128) |
 | 7 | 2026-10-06 22:27 | v12: v11 + reasoning on (include_thoughts true, budget 1024), 4.0 min per task | `bcdb4933` | validator, compiler and structure check; GPU run of these exact files on 27 dev + 10 feature tasks: 19 of 37 (v11 also 19), no turn-cap runs, mean 209 s per task | **0.12** (7 of 58), scored on 8 October by the hosts' recovery of queue-timed-out runs; first listed as "A system error" (Kaggle ref 56892091) |
 | 8 | 2026-10-07 18:53 | v12 resubmission (same bytes as 7) | `bcdb4933` | as 7 | **0.08** (5 of 58), re-scored by the hosts; the same bytes as 7 scored 0.12 (Kaggle ref 56919417) |
-| 9 | 2026-10-08 12:55 | v13b: Budget-Fit core (reasoning 4096, temp 0.2, 8 min / 28 calls / 240 s) plus our rules and a 60 s cap on the agent's own commands | `b2c51def` | validator, compiler and structure check; v13 resolved 16 of 27 in the A/B (reference 15); v13b adds one prompt line, the timeout rule exercised in the v14 run | pending (Kaggle ref 56954737) |
+| 9 | 2026-10-08 12:55 | v13b: Budget-Fit core (reasoning 4096, temp 0.2, 8 min / 28 calls / 240 s) plus our rules and a 60 s cap on the agent's own commands | `b2c51def` | validator, compiler and structure check; v13 resolved 16 of 27 in the A/B (reference 15); v13b adds one prompt line, the timeout rule exercised in the v14 run | **0.15** (9 of 58), scored 10 October (Kaggle ref 56954737) |
 
 ## Notes on the two failures
 
@@ -307,3 +307,13 @@ Other teams' scored runs put the overhead near 30 s per task. v13b sits about
 an hour inside the limit by this estimate; the v17 family's slower unsolved
 tasks (about 35 s more each) would leave almost no margin, which counts
 against submitting it. v18's run will show what four more calls cost.
+
+## v13b scored 0.15 (10 October)
+
+v13b (ref 56954737) finished after two days in the queue with 0.15, 9 of the
+58 public tasks: our best score, up from 0.12. Leaderboard at that time:
+2,290 teams; 152 above 0.15 and 198 at 0.15, where CypherNova1337 was listed
+at row 336 (ties are listed in submission order). Top scores: 0.24 (2 teams),
+0.22 (1), 0.20 (9), 0.18 (39), 0.17 (101). The Budget-Fit author, with the
+same core, has 0.18 (11 of 58); identical submissions differ by about two
+tasks, so the two are in the same band. First place needs 14 of 58.
