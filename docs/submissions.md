@@ -13,7 +13,7 @@ sandbox with `scripts/verify_reference.py`.
 | 5 | 2026-10-04 00:00 | v9: investigator sub-agent, edit/search helpers shipped as a skill, 4.5 min | `04b4d0b6` | validator, compiler and structure check; GPU run of these exact files on the same 5 tasks: 4 of 5 resolved, no exceptions | Public score 0.08 |
 | 6 | 2026-10-05 21:27 | v11: v10 method (features, hints, python3 -c checks), plain helper install, no skill, 4.5 min | `a6814a0c` | validator, compiler and structure check; GPU run of these exact files on 5 gate + 5 feature tasks: 7 of 10 (v9 also 7 of 10), no exceptions | Error: "A system error", no score (Kaggle ref 56862128) |
 | 7 | 2026-10-06 22:27 | v12: v11 + reasoning on (include_thoughts true, budget 1024), 4.0 min per task | `bcdb4933` | validator, compiler and structure check; GPU run of these exact files on 27 dev + 10 feature tasks: 19 of 37 (v11 also 19), no turn-cap runs, mean 209 s per task | **0.12** (7 of 58), scored on 8 October by the hosts' recovery of queue-timed-out runs; first listed as "A system error" (Kaggle ref 56892091) |
-| 8 | 2026-10-07 18:53 | v12 resubmission (same bytes as 7) | `bcdb4933` | as 7 | Error: "A system error", no score (Kaggle ref 56919417) |
+| 8 | 2026-10-07 18:53 | v12 resubmission (same bytes as 7) | `bcdb4933` | as 7 | **0.08** (5 of 58), re-scored by the hosts; the same bytes as 7 scored 0.12 (Kaggle ref 56919417) |
 | 9 | 2026-10-08 12:55 | v13b: Budget-Fit core (reasoning 4096, temp 0.2, 8 min / 28 calls / 240 s) plus our rules and a 60 s cap on the agent's own commands | `b2c51def` | validator, compiler and structure check; v13 resolved 16 of 27 in the A/B (reference 15); v13b adds one prompt line, the timeout rule exercised in the v14 run | pending (Kaggle ref 56954737) |
 
 ## Notes on the two failures
@@ -262,8 +262,11 @@ waited more than 15 hours for a machine was marked as an error, even when it
 later ran. They have lengthened the queue allowance and are re-scoring every
 affected run that finished with a valid submission file; nothing needs to be
 resubmitted. v12 (ref 56892091) came back with 0.12, our best score so far
-and our first scored run with reasoning on. v11 and the v12 resubmission still
-show the error.
+and our first scored run with reasoning on. The v12 resubmission (ref
+56919417, the same bytes) came back on 9 October with 0.08: two identical
+submissions differ by 2 of the 58 public tasks, the spread other teams report
+too. A single public score cannot separate two versions that are within about
+two tasks of each other. v11 still shows the error.
 
 New rule from the same post: a team cannot submit again while its previous
 submission is still scoring (separate from the one-per-day limit).
