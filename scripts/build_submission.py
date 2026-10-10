@@ -16,13 +16,13 @@ from pathlib import Path
 
 import yaml
 from adk_submission import ModelRegistry, compile_submission, validate_directory
+from adk_submission.discovery import discover_declared_models
 from google.adk.models.lite_llm import LiteLlm
 from swegemma.config import (
     ALLOWED_SUBMISSION_EXTENSIONS,
     MAX_SUBMISSION_SIZE_BYTES,
     build_submission_limits,
 )
-from swegemma.models.discovery import validate_single_declared_model
 
 MODEL = "gemma-4-31b-it-qat-w4a16-ct"
 ROOT = Path(__file__).resolve().parent.parent
@@ -51,9 +51,10 @@ TOOLS = {
 def validate(agent_dir: Path) -> None:
     limits, constraints = build_submission_limits()
     validate_directory(agent_dir, limits)
-    declared = validate_single_declared_model(agent_dir)
-    if declared != MODEL:
-        raise SystemExit(f"declared model {declared!r}, expected {MODEL!r}")
+    declared_models = discover_declared_models(agent_dir)
+    if declared_models != {MODEL}:
+        raise SystemExit(f"declared models {sorted(declared_models)}, expected exactly {MODEL!r}")
+    declared = MODEL
     models = ModelRegistry()
     models.register(MODEL, LiteLlm(model=f"openai/{MODEL}", api_base="http://127.0.0.1:9/v1", api_key="EMPTY"))
     agent = compile_submission(agent_dir, TOOLS, models, limits=limits, generation_constraints=constraints)

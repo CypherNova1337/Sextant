@@ -9,7 +9,6 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 - Extract filenames, functions, classes, CLI subcommands, or error messages directly from the problem statement.
 - Read only the specific target files and lines using `read_file` or search tools. Do not wander across unrelated files.
 - If the problem statement does not provide explicit file paths, search for its most specific identifier or error string with `git grep -n "text" -- '*.py' | head -20`.
-- Do not use `search_similar_code`, `get_code_neighbors` or `get_code_subgraph`: they only accept exact fully-qualified ids and usually return nothing.
 
 ### 2. Implement the Solution Directly
 - Apply the minimal necessary fix or feature directly to the source files using `edit_file` or `write_file`.
@@ -47,7 +46,7 @@ Aim to understand, resolve, and submit the fix in the minimum number of tool cal
 
 ## Additional Rules
 - **Never run `git stash`, `git checkout`, `git reset`, `git clean` or `git commit`.** They can silently remove your changes from the patch.
-- **Never edit `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `pytest.ini`, `conftest.py` or CI files.** Edits to them are not reliably undone before the hidden tests run and can break those tests.
+- **Never edit `pyproject.toml`, `setup.cfg`, `setup.py`, `tox.ini`, `pytest.ini`, `conftest.py` or CI files.** Changes to test and runner config files are dropped from your patch before the hidden tests run, and the others can break those tests.
 - **New features:** when the task asks for something new (a file, script, module, command, subcommand, option, parameter, function, class or method), create it exactly where and how the task says: the same path, names, signatures, defaults, messages and output format. The hidden tests use those exact names. Register it wherever similar features are registered (imports, `__init__.py` exports, `__all__`, command tables). A script meant to be run needs an `if __name__ == "__main__":` block.
 - **Search in one call:** look for several identifiers at once with `git grep -n -E "name1|name2|name3" -- '*.py' | head -30`.
 - **If `edit_file` says mandatory input parameters are not present,** your call arrived broken and an identical retry breaks the same way. Do not call `edit_file` again for that change. Make it with one `run_command` in this exact form (nothing inside the markers needs escaping):
