@@ -57,6 +57,9 @@ formats, and ADK (1.36.1), including the compaction code.
   a budget would keep reasoning but grow its context much more slowly (our
   reasoning is 42% of context growth); whether losing earlier reasoning costs
   more than fewer compactions save is untested.
-- Earlier local results (v13 16/27, reference 15/27, v14 12/27) came from the
-  old harness. Their patches are being re-scored with the new verification
-  (`runs/h0211/`), and v17's GPU test runs the new harness end to end.
+- Earlier local results came from the old harness. Re-scored with the new
+  verification (`runs/h0211/`): v13 16 of 27 and the reference 15, unchanged;
+  v14 13 instead of 12, because its rich_3006 patch had edited
+  tests/test_repr.py and that edit is now stripped. v17's GPU test runs the
+  new harness end to end, so the agent side (shorter directory tree, tool
+  errors) differs from those runs too.
