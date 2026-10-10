@@ -108,8 +108,7 @@ both.
 Sampling and budgets are v13b's: temperature 0.2, thinking budget 4,096,
 240 s command timeout, 28 calls, 8 minutes, 80 turns.
 
-Package: `data/v17.zip`, built with `scripts/build_submission.py`. Not yet run
-on a GPU.
+Package: `data/v17.zip`, built with `scripts/build_submission.py`.
 
 ## What to measure on the GPU run
 
@@ -118,3 +117,41 @@ the first compaction and re-reads after a compaction, next to resolved
 counts, first-edit calls, edit failures and mean seconds per task. v17 should
 show fewer compactions, a later first compaction, fewer tasks without an edit
 by call 12, and no more seconds per task than v13 (257 s mean).
+
+## v17 on the GPU (10 October, 9 October harness)
+
+27 dev tasks, Kaggle 4xL4, notebook `cyphernova1337/sextant-v17` version 2,
+patches re-scored with the new verification:
+
+| | v17 | v13 | reference | v14 |
+|---|---|---|---|---|
+| resolved | **15** | 16 | 15 | 13 |
+| mean seconds per task | 268 | 257 | 253 | 273 |
+| tasks with a compaction | 24 | 22 | 20 | 25 |
+| median call of the first compaction | 17 | 15 | 16 | 14 |
+| no edit by call 12 | 12 | 12 | 11 | 9 |
+| ends at the call cap / time cap | 8 / 2 | 5 / 1 | 3 / 2 | 2 / 5 |
+
+(v13, the reference and v14 ran on the old harness; their patches were
+re-scored with the new verification.)
+
+- **Structural changes took effect.** The first prompt fell from 5,427 to
+  4,242 tokens (median): the harness's pruned directory tree and the dropped
+  graph tools outweigh the duplicated problem statement. Every request kept
+  the task statement.
+- **Behavioural rules were mostly ignored.** Only 5 of 27 tasks numbered their
+  calls, and the numbers lagged the real count by 1 to 4. Reads stayed the
+  same size (760 tokens against 773), so the context still grew about 650
+  tokens per call and compaction still came, just two calls later.
+- **Broken calls moved from edit_file to write_file.** edit_file lost an
+  argument 4 times (21 in v13), with no identical retries; write_file lost its
+  path 20 times, 9 of them in a row in fastapi_14616. The heredoc template
+  was never used.
+- **Result:** 15 of 27, inside the noise of v13 and the reference. 13 tasks
+  are solved by every version and 9 fastapi tasks by none, so only about five
+  tasks decide these comparisons.
+
+Next: v17b keeps the structural changes and drops what the model ignored
+(call counting, the output rule), and extends the broken-call rule to every
+tool with a heredoc for new files. It runs against v13b in one notebook on
+the new harness.

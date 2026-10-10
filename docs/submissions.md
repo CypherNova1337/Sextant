@@ -279,7 +279,7 @@ shown at rank 823; 480 teams are above 0.12 and 386 share it. Top scores:
 v12 resolved 10 of 27 dev tasks locally against 16 for v13 and 15 for the
 Budget-Fit reference, so the local ranking and the leaderboard agree so far.
 
-## v17 (staged 8 October, not yet run)
+## v17 (staged 8 October; GPU run 10 October: 15 of 27, see docs/compaction.md)
 
 The scorer summarizes away older history, including the task message, once a
 prompt reaches 14,336 tokens; this happened in 22 of v13's 27 dev tasks,
