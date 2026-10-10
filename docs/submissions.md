@@ -289,3 +289,21 @@ call), call counting, v16's one-step shell edit after a broken `edit_file`
 call, smaller outputs, and a note that old history gets summarized. agent.yaml,
 sampling and budgets are v13b's. Details and measurements in
 docs/compaction.md. data/v17.zip, built and checked on CPU only.
+
+## Runtime check with the new-harness runs (10 October)
+
+Same method as the 8 October estimate: 85% of hidden tasks weighted like the
+dev tasks the agent failed (they run longest), 15% like the ones it solved,
+plus 15 minutes of start-up and a per-task scorer overhead.
+
+| Version (run) | solved / unsolved mean s | weighted s | 120 tasks at 30 / 60 / 90 s overhead |
+|---|---|---|---|
+| v13 (old harness) | 222 / 307 | 294 | 11.1 / 12.1 / 13.1 h |
+| v13b (new harness) | 228 / 297 | 287 | 10.8 / 11.8 / 12.8 h |
+| v17b (new harness) | 244 / 333 | 320 | 11.9 / 12.9 / 13.9 h |
+| v17 (new harness) | 208 / 344 | 324 | 12.0 / 13.0 / 14.0 h |
+
+Other teams' scored runs put the overhead near 30 s per task. v13b sits about
+an hour inside the limit by this estimate; the v17 family's slower unsolved
+tasks (about 35 s more each) would leave almost no margin, which counts
+against submitting it. v18's run will show what four more calls cost.
